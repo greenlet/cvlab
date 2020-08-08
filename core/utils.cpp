@@ -3,7 +3,7 @@
 CVImageProcessorImpl::CVImageProcessorImpl(CVImageCallback callback)
     : callback_(callback) {}
 
-void CVImageProcessorImpl::process(const cv::Mat &frame) { callback_(frame); }
+void CVImageProcessorImpl::process(cv::Mat frame) { callback_(frame); }
 
 CVImageLoop::CVImageLoop(const std::string &file_name, CVImageCallback callback,
                          int delay_ms)
@@ -27,4 +27,12 @@ CVImageLoop::CVImageLoop(const std::string &file_name,
       break;
     }
   }
+}
+
+CVPoints2f KeyPointsToPoints2f(const CVKeyPoints &keypoints) {
+  CVPoints2f points(keypoints.size());
+  for (size_t i = 0; i < keypoints.size(); i++) {
+    points[i] = keypoints[i].pt;
+  }
+  return points;
 }

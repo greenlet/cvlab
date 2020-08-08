@@ -1,6 +1,8 @@
 #include <iostream>
 
 #include "utils.h"
+#include "view.h"
+#include "scene.h"
 
 int main(int argc, char **argv) {
   std::cout << "Starting Motion 3d" << std::endl;
@@ -19,8 +21,17 @@ int main(int argc, char **argv) {
     delay_ms = atoi(argv[2]);
   }
 
-  CVImageLoop(file_name, [](const cv::Mat &frame) {
-    cv::imshow("frame", frame);
+
+  Scene scene;
+  CVImageLoop(file_name, [&scene](cv::Mat img) {
+    ViewPtr view = scene.processImage(img);
+    // std::cout << "View: " << view->id() << ". Keypoints: " << view->keypoints().size() << std::endl;
+    // cv::Mat img_vis = view->visualizeKeypoints();
+
+    const CVKeyPoints &keypoints = scene.tracker().tracked_keypoints();
+    cv::Mat img_vis = view->visualizeKeypoints(keypoints);
+
+    cv::imshow("keypoints", img_vis);
   }, delay_ms);
 
   return 0;

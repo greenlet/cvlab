@@ -3,6 +3,7 @@ set(SRC_FILES
   scene.cpp
   utils.cpp
   view.cpp
+  tracker.cpp
 )
 message(STATUS "SRC_FILES: ${SRC_FILES}")
 

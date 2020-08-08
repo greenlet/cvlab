@@ -1,14 +1,13 @@
 #pragma once
 
-#include <opencv2/opencv.hpp>
 
 #include "common.h"
 
-using CVImageCallback = std::function<void(const cv::Mat &img)>;
+using CVImageCallback = std::function<void(const cv::Mat img)>;
 
 class CVImageProcessor {
  protected:
-  virtual void process(const cv::Mat &frame) = 0;
+  virtual void process(cv::Mat img) = 0;
 
   friend class CVImageLoop;
 };
@@ -18,7 +17,7 @@ class CVImageProcessorImpl : public CVImageProcessor {
   CVImageProcessorImpl(CVImageCallback callback);
 
  protected:
-  virtual void process(const cv::Mat &frame) override;
+  virtual void process(cv::Mat img) override;
 
  private:
   CVImageCallback callback_;
@@ -36,3 +35,6 @@ class CVImageLoop {
   std::shared_ptr<CVImageProcessor> processor_;
   int delay_ms_;
 };
+
+
+CVPoints2f KeyPointsToPoints2f(const CVKeyPoints &keypoints);
