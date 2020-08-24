@@ -7,7 +7,7 @@ ViewPtr Scene::processImage(cv::Mat img) {
 
   view->calcKeypoints();
 
-  tracker_.processView(view);
+  klt_tracker_.processView(view);
 
   views_.push_back(view);
 

@@ -3,11 +3,9 @@
 #include "common.h"
 #include "view.h"
 
-using TrackId = int;
-
-class Tracker {
+class KLTTracker {
  public:
-  Tracker();
+  KLTTracker();
 
   void processView(ViewPtr view);
 

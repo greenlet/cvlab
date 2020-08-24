@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(OpenCV REQUIRED)
 message(STATUS "OpenCV include dirs: ${OpenCV_INCLUDE_DIRS}")
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 include_directories(${PROJECT_SOURCE_DIR}/core)
 add_subdirectory(core)

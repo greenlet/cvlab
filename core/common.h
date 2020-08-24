@@ -1,11 +1,13 @@
 #pragma once
 
-#include <memory>
-#include <vector>
+#include <bitset>
+#include <eigen3/Eigen/Dense>
 #include <functional>
-#include <unordered_map>
-
+#include <memory>
 #include <opencv2/opencv.hpp>
+#include <random>
+#include <unordered_map>
+#include <vector>
 
 using CVKeyPoints = std::vector<cv::KeyPoint>;
 using CVMats = std::vector<cv::Mat>;

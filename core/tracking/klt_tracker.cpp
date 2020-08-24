@@ -1,11 +1,11 @@
 
-#include "tracker.h"
+#include "tracking/klt_tracker.h"
 
 #include "utils.h"
 
-Tracker::Tracker() {}
+KLTTracker::KLTTracker() {}
 
-void Tracker::processView(ViewPtr view) {
+void KLTTracker::processView(ViewPtr view) {
   const CVKeyPoints &cur_keypoints = view->calcKeypoints();
   view->calcPyramid();
 

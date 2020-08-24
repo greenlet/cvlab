@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
     // std::cout << "View: " << view->id() << ". Keypoints: " << view->keypoints().size() << std::endl;
     // cv::Mat img_vis = view->visualizeKeypoints();
 
-    const CVKeyPoints &keypoints = scene.tracker().tracked_keypoints();
+    const CVKeyPoints &keypoints = scene.klt_tracker().tracked_keypoints();
     cv::Mat img_vis = view->visualizeKeypoints(keypoints);
 
     cv::imshow("keypoints", img_vis);
