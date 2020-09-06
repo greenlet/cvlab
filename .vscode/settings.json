@@ -1,0 +1,8 @@
+{
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "clang-format.executable": "${workspaceRoot}/.clang-format",
+    "cmake.configureSettings": {
+        "OpenCV_DIR": "/home/misha/prog/lib/opencv/install/lib/cmake/opencv4"
+    }
+}
+

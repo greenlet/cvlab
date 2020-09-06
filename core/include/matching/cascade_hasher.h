@@ -11,12 +11,12 @@ class CascadeHasher {
   using HashSizeT = unsigned;
   using BucketHashSizeT = unsigned;
   using FeatureSizeT = unsigned;
-  using Feature = Eigen::Matrix<double, 1, FeatureSize>;
-  using FeatureHashVec = Eigen::Matrix<double, HashSize, 1>;
-  using FeatureBucketHashVec = Eigen::Matrix<double, BucketHashSize, 1>;
-  using FeaturesMat = Eigen::Matrix<double, Eigen::Dynamic, FeatureSize>;
-  using HashFeatureMat = Eigen::Matrix<double, HashSize, FeatureSize>;
-  using BucketHashFeatureMat = Eigen::Matrix<double, BucketHashSize, FeatureSize>;
+  using Feature = Eigen::Matrix<float, 1, FeatureSize>;
+  using FeatureHashVec = Eigen::Matrix<float, HashSize, 1>;
+  using FeatureBucketHashVec = Eigen::Matrix<float, BucketHashSize, 1>;
+  using FeaturesMat = Eigen::Matrix<float, Eigen::Dynamic, FeatureSize>;
+  using HashFeatureMat = Eigen::Matrix<float, HashSize, FeatureSize>;
+  using BucketHashFeatureMat = Eigen::Matrix<float, BucketHashSize, FeatureSize>;
   using BucketGroupsHashFeatureMats = std::array<BucketHashFeatureMat, BucketGroupsSize>;
   using FeatureHash = std::bitset<HashSize>;
   using BucketGroupsBucketIds = std::array<BucketId, BucketGroupsSize>;
@@ -33,7 +33,7 @@ class CascadeHasher {
   struct Match {
     FeatureId feature1_id;
     FeatureId feature2_id;
-    double distance;
+    float distance;
   };
   using Matches = std::vector<Match>;
 
@@ -50,13 +50,14 @@ class CascadeHasher {
       FeaturesHammingDistances features_hamming_distances(features_hashes_bucket_ids_.size());
       FeaturesNumHummingDistances features_num_hamming_distances;
       const unsigned kMaxNearestFeatures = 10;
-      std::vector<std::pair<double, FeatureId>> dist_feature_candidates;
+      std::vector<std::pair<float, FeatureId>> dist_feature_candidates;
       dist_feature_candidates.reserve(kMaxNearestFeatures);
       features_hamming_distances.setZero();
 
       unsigned features_offset = 0;
       for (FeatureId feature1_id = 0; feature1_id < other.features_hashes_bucket_ids_.size();
            feature1_id++) {
+        FeatureHash &feature1_hash = other.features_[feature1_id];
         features_num_hamming_distances.fill(0);
         dist_feature_candidates.clear();
 
@@ -66,9 +67,10 @@ class CascadeHasher {
           BucketId bucket_id = other_bgb_ids[i_bgroup];
 
           for (FeatureId feature2_id : features_bucket_groups_[i_bgroup][bucket_id]) {
-            unsigned ham_dist = (feature1_id ^ feature2_id).count();
+            FeatureHash &feature2_hash = features_[feature2_id];
+            unsigned ham_dist = (feature1_hash ^ feature2_hash).count();
             unsigned i_feature2 = features_num_hamming_distances[ham_dist]++;
-            features_hamming_distances[i_feature2, ham_dist] = feature2_id;
+            features_hamming_distances(i_feature2, ham_dist) = feature2_id;
           }
         }
 
@@ -84,19 +86,19 @@ class CascadeHasher {
           for (unsigned i_feature2 = 0;
                i_feature2 < num_features2 && dist_feature_candidates.size() <= kMaxNearestFeatures;
                i_feature2++) {
-            FeatureId feature2_id = features_hamming_distances[i_feature2, ham_dist];
+            FeatureId feature2_id = features_hamming_distances(i_feature2, ham_dist);
             Feature feature2 = other.features_[feature2_id];
-            double dist = (feature1 - feature2).norm();
+            float dist = (feature1 - feature2).norm();
             dist_feature_candidates.emplace_back(dist, feature2_id);
           }
         }
 
         if (dist_feature_candidates.size() >= NN) {
           std::partial_sort(dist_feature_candidates.begin(), dist_feature_candidates.begin() + NN,
-                            dist_feature_candidates.end())
+                            dist_feature_candidates.end());
           for (unsigned i_match = 0; i_match < NN; i_match++) {
             auto [cand_dist, cand_feature_id] = dist_feature_candidates[i_match];
-            matches.emplace(feature1_id, cand_feature_id, cand_dist));
+            matches.emplace(feature1_id, cand_feature_id, cand_dist);
           }
         }
 
@@ -109,6 +111,8 @@ class CascadeHasher {
     FeaturesHashesBucketIds features_hashes_bucket_ids_;
     FeaturesBucketGroups features_bucket_groups_;
   };
+
+  using ContainerPtr = std::shared_ptr<Container>;
 
   CascadeHasher() {
     std::mt19937 gen(std::mt19937::default_seed);
@@ -129,7 +133,7 @@ class CascadeHasher {
     }
   }
 
-  std::shared_ptr<Container> make_hash(FeaturesMat &&features) {
+  ContainerPtr make_hash(FeaturesMat &&features) {
     Feature features_mean = features.colwise().mean();
     unsigned n_features = features.rows();
     FeaturesHashesBucketIds features_hashes_bucket_ids(n_features);

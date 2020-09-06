@@ -18,6 +18,7 @@ class View {
   const ViewId id() const { return id_; }
   const cv::Mat& img() const { return img_; }
   const CVKeyPoints& keypoints() const { return keypoints_; }
+  const CVDescriptors& descriptors() const { return descriptors_; }
   const CVMats& pyramid() const { return pyramid_; }
   const cv::Mat& img_grayscale() const { return img_grayscale_; }
 
@@ -26,6 +27,7 @@ class View {
   cv::Mat img_;
   cv::Mat img_grayscale_;
   CVKeyPoints keypoints_;
+  CVDescriptors descriptors_;
   CVMats pyramid_;
 };
 
@@ -53,3 +55,5 @@ struct hash<ViewKeyPointId> {
   }
 };
 }  // namespace std
+
+

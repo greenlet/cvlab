@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "utils.h"
+#include "image_loop.h"
 #include "view.h"
 #include "scene.h"
 

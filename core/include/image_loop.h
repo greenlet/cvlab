@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "common.h"
 
 using CVImageCallback = std::function<void(const cv::Mat img)>;
@@ -25,16 +24,12 @@ class CVImageProcessorImpl : public CVImageProcessor {
 
 class CVImageLoop {
  public:
-  CVImageLoop(const std::string &file_name, CVImageCallback callback,
+  CVImageLoop(const std::string &file_name, CVImageCallback callback, int waiting_ms = 0);
+  CVImageLoop(const std::string &file_name, std::shared_ptr<CVImageProcessor> Processor,
               int waiting_ms = 0);
-  CVImageLoop(const std::string &file_name,
-              std::shared_ptr<CVImageProcessor> Processor, int waiting_ms = 0);
 
  private:
   std::string file_name_;
   std::shared_ptr<CVImageProcessor> processor_;
   int delay_ms_;
 };
-
-
-CVPoints2f KeyPointsToPoints2f(const CVKeyPoints &keypoints);

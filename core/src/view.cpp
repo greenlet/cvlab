@@ -1,11 +1,12 @@
 #include "view.h"
+#include "utils.h"
 
 View::View(int id, cv::Mat img) : id_(id), img_(img) {}
 
 const CVKeyPoints& View::calcKeypoints() {
   if (keypoints_.size() == 0) {
     cv::Ptr<cv::ORB> orb = cv::ORB::create();
-    orb->detect(img_, keypoints_);
+    orb->detectAndCompute(img_, cv::noArray(), keypoints_, descriptors_);
   }
   return keypoints_;
 }
@@ -40,3 +41,4 @@ ViewKeyPointId::ViewKeyPointId(ViewId view_id, KeyPointId keypoint_id)
     : view_id_(view_id), keypoint_id_(keypoint_id) {
   id_ = (view_id_ << 14) + keypoint_id_;
 }
+
