@@ -4,8 +4,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -32,8 +30,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        ld("--> onCreate")
 
-        Motion3d.createApp()
+        Motion3d.create()
 
         // Request camera permissions
         if (allPermissionsGranted()) {
@@ -185,16 +184,24 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        ld("--> onPause")
         Motion3d.stopCamera()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        ld("--> onResume")
+        Motion3d.startCamera()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        ld("--> onDestroy")
 //        cameraExecutor.shutdown()
-        Motion3d.stopCamera()
+        Motion3d.destroy()
     }
 
-    companion object {
+    companion object : Logger() {
         private const val TAG = "CameraXBasic"
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10

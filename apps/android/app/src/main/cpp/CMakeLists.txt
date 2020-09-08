@@ -34,6 +34,7 @@ add_library(motion3d-android SHARED
         motion3d_interface.cpp
         motion3d_app.cpp
         camera_android.cpp
+        logger.cpp
 )
 
 target_link_libraries(motion3d-android
