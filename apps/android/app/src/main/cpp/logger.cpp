@@ -19,9 +19,9 @@ Logger::Logger(const char *tag) : tag_(tag) {
     }
 }
 
-LOG_FUN(lv, VERBOSE)
-LOG_FUN(ld, DEBUG)
-LOG_FUN(li, INFO)
-LOG_FUN(lw, WARN)
-LOG_FUN(le, ERROR)
+LOG_FUN(V, VERBOSE)
+LOG_FUN(D, DEBUG)
+LOG_FUN(I, INFO)
+LOG_FUN(W, WARN)
+LOG_FUN(E, ERROR)
 

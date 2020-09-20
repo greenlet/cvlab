@@ -18,10 +18,10 @@ open class Logger(var tag: String? = null) {
         }
     }
 
-    fun lv(msg: String, tr: Throwable? = null) = Log.v(tag, msg, tr)
-    fun ld(msg: String, tr: Throwable? = null) = Log.d(tag, msg, tr)
-    fun li(msg: String, tr: Throwable? = null) = Log.i(tag, msg, tr)
-    fun lw(msg: String, tr: Throwable? = null) = Log.w(tag, msg, tr)
-    fun le(msg: String, tr: Throwable? = null) = Log.e(tag, msg, tr)
+    fun V(msg: String, tr: Throwable? = null) = Log.v(tag, msg, tr)
+    fun D(msg: String, tr: Throwable? = null) = Log.d(tag, msg, tr)
+    fun I(msg: String, tr: Throwable? = null) = Log.i(tag, msg, tr)
+    fun W(msg: String, tr: Throwable? = null) = Log.w(tag, msg, tr)
+    fun E(msg: String, tr: Throwable? = null) = Log.e(tag, msg, tr)
 }
 

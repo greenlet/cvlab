@@ -3,11 +3,11 @@
 class Logger {
 public:
     Logger(const char *tag=nullptr);
-    void lv(const char *fmt, ...);
-    void ld(const char *fmt, ...);
-    void li(const char *fmt, ...);
-    void lw(const char *fmt, ...);
-    void le(const char *fmt, ...);
+    void V(const char *fmt, ...);
+    void D(const char *fmt, ...);
+    void I(const char *fmt, ...);
+    void W(const char *fmt, ...);
+    void E(const char *fmt, ...);
 private:
     const char *tag_;
 };
