@@ -2,7 +2,7 @@
 
 class Logger {
 public:
-    Logger(const char *tag=nullptr);
+    Logger(const char *tag=nullptr) noexcept;
     void V(const char *fmt, ...);
     void D(const char *fmt, ...);
     void I(const char *fmt, ...);

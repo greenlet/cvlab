@@ -14,7 +14,7 @@ message(STATUS "OpenCV include dirs: ${OpenCV_INCLUDE_DIRS}")
 
 include_directories(external/eigen)
 
-include_directories(${PROJECT_SOURCE_DIR}/core/include)
+include_directories(${PROJECT_SOURCE_DIR}/core/src)
 add_subdirectory(core)
 add_subdirectory(apps)
 

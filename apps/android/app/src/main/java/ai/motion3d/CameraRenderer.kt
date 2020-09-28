@@ -1,6 +1,7 @@
 package ai.motion3d
 
 import android.graphics.SurfaceTexture
+import android.opengl.GLES10.GL_TEXTURE_2D
 import android.opengl.GLES11Ext.GL_TEXTURE_EXTERNAL_OES
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
@@ -18,14 +19,14 @@ class CameraRenderer: GLSurfaceView.Renderer {
         // Prepare texture and surface
         val textures = IntArray(1)
         GLES20.glGenTextures(1, textures, 0)
-        GLES20.glBindTexture(GL_TEXTURE_EXTERNAL_OES, textures[0])
+        GLES20.glBindTexture(GL_TEXTURE_2D, textures[0])
 
         surfaceTexture = SurfaceTexture(textures[0])
-        surfaceTexture.setOnFrameAvailableListener {
-            synchronized(lock) {
-                frameAvailable = true
-            }
-        }
+//        surfaceTexture.setOnFrameAvailableListener {
+//            synchronized(lock) {
+//                frameAvailable = true
+//            }
+//        }
 
         // Choose you preferred preview size here before creating surface
         // val optimalSize = getOptimalSize()
@@ -43,14 +44,15 @@ class CameraRenderer: GLSurfaceView.Renderer {
     }
 
     override fun onDrawFrame(p0: GL10?) {
-        synchronized(lock) {
-            if (frameAvailable) {
-                surfaceTexture.updateTexImage()
-                surfaceTexture.getTransformMatrix(texMatrix)
-                frameAvailable = false
-            }
-        }
+//        synchronized(lock) {
+//            if (frameAvailable) {
+//                surfaceTexture.updateTexImage()
+//                surfaceTexture.getTransformMatrix(texMatrix)
+//                frameAvailable = false
+//            }
+//        }
 
+        surfaceTexture.getTransformMatrix(texMatrix)
         onDrawFrame(texMatrix)
     }
 

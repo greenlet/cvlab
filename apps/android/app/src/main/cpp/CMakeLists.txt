@@ -22,7 +22,7 @@ set(CPP_SOURCE_DIR ${CMAKE_SOURCE_DIR}/../../../../../../)
 set(EIGEN_SRC_DIR ${CPP_SOURCE_DIR}/external/eigen)
 include_directories(${EIGEN_SRC_DIR})
 
-include_directories(${CPP_SOURCE_DIR}/core/include)
+include_directories(${CPP_SOURCE_DIR}/core/src)
 
 
 add_library(motion3d-core STATIC IMPORTED)

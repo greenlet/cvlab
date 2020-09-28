@@ -87,6 +87,44 @@ GLuint textureId;
 int width = 1080;
 int height = 1886;
 
+//static const char *vertexShaderSrc = R"(
+//        precision highp float;
+//        attribute vec3 vertexPosition;
+//        attribute vec2 uvs;
+//        varying vec2 varUvs;
+//        uniform mat4 texMatrix;
+//        uniform mat4 mvp;
+//        void main()
+//        {
+//            varUvs = (texMatrix * vec4(uvs.x, uvs.y, 0, 1.0)).xy;
+//            gl_Position = mvp * vec4(vertexPosition, 1.0);
+//        }
+//)";
+
+//static const char *fragmentShaderSrc = R"(
+//        #extension GL_OES_EGL_image_external : require
+//        precision mediump float;
+//        varying vec2 varUvs;
+//        uniform samplerExternalOES texSampler;
+//        uniform vec4 color;
+//        uniform vec2 size;
+//        void main()
+//        {
+//            if (gl_FragCoord.x/size.x < 0.5) {
+//                gl_FragColor = texture2D(texSampler, varUvs) * color;
+//            }
+//            else {
+//                const float threshold = 1.1;
+//                vec4 c = texture2D(texSampler, varUvs);
+//                if (length(c) > threshold) {
+//                    gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+//                } else {
+//                    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+//                }
+//            }
+//        }
+//)";
+
 static const char *vertexShaderSrc = R"(
         precision highp float;
         attribute vec3 vertexPosition;
@@ -96,8 +134,9 @@ static const char *vertexShaderSrc = R"(
         uniform mat4 mvp;
         void main()
         {
+//            varUvs = vec4(uvs.x, uvs.y, 0, 1.0)).xy;
             varUvs = (texMatrix * vec4(uvs.x, uvs.y, 0, 1.0)).xy;
-            gl_Position = mvp * vec4(vertexPosition, 1.0);
+            gl_Position = vec4(vertexPosition, 1.0);
         }
 )";
 
@@ -105,23 +144,12 @@ static const char *fragmentShaderSrc = R"(
         #extension GL_OES_EGL_image_external : require
         precision mediump float;
         varying vec2 varUvs;
-        uniform samplerExternalOES texSampler;
+        uniform sampler2D texSampler;
         uniform vec4 color;
         uniform vec2 size;
         void main()
         {
-            if (gl_FragCoord.x/size.x < 0.5) {
-                gl_FragColor = texture2D(texSampler, varUvs) * color;
-            }
-            else {
-                const float threshold = 1.1;
-                vec4 c = texture2D(texSampler, varUvs);
-                if (length(c) > threshold) {
-                    gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
-                } else {
-                    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-                }
-            }
+            gl_FragColor = texture2D(texSampler, varUvs);
         }
 )";
 
@@ -154,6 +182,16 @@ static AImageReader* imageReader = nullptr;
 
 static ACaptureSessionOutput* imageOutput = nullptr;
 #endif
+
+AImage *g_image = nullptr;
+uint8_t *g_image_data[] = {nullptr, nullptr};
+bool g_image_avail[] = {false, false};
+int g_image_ind = 0;
+int g_image_data_len = 0;
+int32_t g_width, g_height;
+std::mutex g_image_lock;
+bool g_image_first = true;
+
 
 
 /**
@@ -206,10 +244,35 @@ static ACameraCaptureSession_stateCallbacks sessionStateCallbacks{
 #ifdef WITH_IMAGE_READER
 static void imageCallback(void* context, AImageReader* reader)
 {
-    AImage *image = nullptr;
+    AImage *image;
     auto status = AImageReader_acquireNextImage(reader, &image);
+
 //    LOG.D("imageCallback(): %d", status);
     // Check status here ...
+    int32_t f;
+    AImage_getWidth(image, &g_width);
+    AImage_getHeight(image, &g_height);
+    AImage_getFormat(image, &f);
+
+    cv::Mat _ndk_rgb_img, _ndk_gray_img;
+    uint8_t *yPixel, *uPixel, *vPixel;
+    int32_t yLen, uLen, vLen;
+    AImage_getPlaneData(image, 0, &yPixel, &yLen);
+    AImage_getPlaneData(image, 1, &uPixel, &uLen);
+    AImage_getPlaneData(image, 2, &vPixel, &vLen);
+
+    g_image_lock.lock();
+    g_image_data_len = yLen + vLen + uLen;
+    if (g_image_data[g_image_ind] == nullptr) {
+        g_image_data[g_image_ind] = new uint8_t[g_image_data_len];
+    }
+    memcpy(g_image_data[g_image_ind], yPixel, yLen);
+    memcpy(g_image_data[g_image_ind] + yLen, vPixel, vLen);
+    memcpy(g_image_data[g_image_ind] + yLen + vLen, uPixel, uLen);
+    g_image_avail[g_image_ind] = true;
+    g_image_lock.unlock();
+
+//    LOG.D("Width x Height x Format: %d x %d x %#x. %d", g_width, g_height, f, g_image_data_len);
     AImage_delete(image);
 
     // Try to process data without blocking the callback
@@ -230,8 +293,12 @@ static void imageCallback(void* context, AImageReader* reader)
 AImageReader* createJpegReader()
 {
     AImageReader* reader = nullptr;
-    media_status_t status = AImageReader_new(1920, 1080, AIMAGE_FORMAT_JPEG,
+//    AImageReader_new(1920, 1080, AIMAGE_FORMAT_JPEG,
+//                     4, &reader);
+    AImageReader_new(1920, 1080, AIMAGE_FORMAT_YUV_420_888,
                      4, &reader);
+//    AImageReader_new(1920, 1080, AIMAGE_FORMAT_RGBA_8888,
+//                     4, &reader);
 
     //if (status != AMEDIA_OK)
         // Handle errors here
@@ -426,10 +493,10 @@ static void initCam(JNIEnv* env, jobject surface)
 
     // Prepare outputs for session
     int32_t format = ANativeWindow_getFormat(textureWindow);
-    ANativeWindow_setBuffersGeometry(textureWindow, 1920, 1080, format);
+//    ANativeWindow_setBuffersGeometry(textureWindow, 1920, 1080, format);
     ACaptureSessionOutput_create(textureWindow, &textureOutput);
     ACaptureSessionOutputContainer_create(&outputs);
-    ACaptureSessionOutputContainer_add(outputs, textureOutput);
+//    ACaptureSessionOutputContainer_add(outputs, textureOutput);
 
 // Enable ImageReader example in CMakeLists.txt. This will additionally
 // make image data available in imageCallback().
@@ -444,9 +511,9 @@ static void initCam(JNIEnv* env, jobject surface)
 #endif
 
     // Prepare target surface
-    ANativeWindow_acquire(textureWindow);
-    ACameraOutputTarget_create(textureWindow, &textureTarget);
-    ACaptureRequest_addTarget(request, textureTarget);
+//    ANativeWindow_acquire(textureWindow);
+//    ACameraOutputTarget_create(textureWindow, &textureTarget);
+//    ACaptureRequest_addTarget(request, textureTarget);
 
     // Create the session
     ACameraDevice_createCaptureSession(cameraDevice, outputs, &sessionStateCallbacks, &textureSession);
@@ -491,11 +558,21 @@ static void initSurface(JNIEnv* env, jint texId, jobject surface)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
 
     // We can use the id to bind to GL_TEXTURE_EXTERNAL_OES
-    textureId = texId;
-
+//    textureId = texId;
+    glGenTextures(1, &textureId);
     // Prepare the surfaces/targets & initialize session
     initCam(env, surface);
 }
+
+void checkGLError()
+{
+    GLenum err;
+    while((err = glGetError()) != GL_NO_ERROR){
+//        GL_NO_ERROR
+        LOG.E("GL Err: %#06x", err);
+    }
+}
+#include <opencv2/core.hpp>
 
 static void drawFrame(JNIEnv* env, jfloatArray texMatArray)
 {
@@ -504,6 +581,7 @@ static void drawFrame(JNIEnv* env, jfloatArray texMatArray)
 
     glUseProgram(prog);
 
+    glViewport(0, 0, width, height);
     // Configure main transformations
     float mvp[] = {
             1.0f, 0, 0, 0,
@@ -524,17 +602,50 @@ static void drawFrame(JNIEnv* env, jfloatArray texMatArray)
     // Prepare texture for drawing
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_EXTERNAL_OES, textureId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glUniform1i(texSampler, 0);
+
+    if (g_image_avail[g_image_ind]) {
+        g_image_lock.lock();
+        uint8_t *data = g_image_data[g_image_ind];
+        g_image_avail[g_image_ind] = false;
+        g_image_ind = (g_image_ind + 1) % 2;
+        g_image_lock.unlock();
+
+//        LOG.D("cv w x h: %d x %d", g_width, g_height);
+//        if (g_image_first) {
+//            glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, g_width, g_height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, data);
+//            g_image_first = false;
+//        } else {
+//            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, g_width, g_height, GL_LUMINANCE, GL_UNSIGNED_BYTE, data);
+//        }
+
+        cv::Mat mYUV = cv::Mat(g_height, g_width + g_width / 2, CV_8UC1, data);
+//        cv::Mat mYUV = cv::Mat(g_width + g_width / 2, g_height, CV_8UC1, data);
+        cv::Mat img_rgb;
+        cv::cvtColor(mYUV, img_rgb, cv::COLOR_YUV2RGB_NV21, 3);
+        cv::rotate(img_rgb, img_rgb, cv::ROTATE_90_CLOCKWISE);
+        LOG.D("cv w x h: %d x %d. t: %d", img_rgb.cols, img_rgb.rows, img_rgb.type());
+        if (g_image_first) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img_rgb.cols, img_rgb.rows, 0, GL_RGB, GL_UNSIGNED_BYTE, img_rgb.data);
+            g_image_first = false;
+        } else {
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img_rgb.cols, img_rgb.rows, GL_RGB, GL_UNSIGNED_BYTE, img_rgb.data);
+        }
+
+        checkGLError();
+    }
+
 
     // Pass SurfaceTexture transformations to shader
     float* tm = env->GetFloatArrayElements(texMatArray, 0);
+//    LOG.D("tm: %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f", tm[0], tm[1], tm[2], tm[3], tm[4], tm[5], tm[6], tm[7]);
     glUniformMatrix4fv(texMatrix, 1, false, tm);
     env->ReleaseFloatArrayElements(texMatArray, tm, 0);
-
-    // Set the SurfaceTexture sampler
-    glUniform1i(texSampler, 0);
 
     // I use red color to mix with camera frames
     float c[] = { 1, 0, 0, 1 };
@@ -557,9 +668,6 @@ static void drawFrame(JNIEnv* env, jfloatArray texMatArray)
     glEnableVertexAttribArray(uvsAttrib);
     glVertexAttribPointer(uvsAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *)(3 * sizeof(float)));
 
-    glViewport(0, 0, width, height);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }

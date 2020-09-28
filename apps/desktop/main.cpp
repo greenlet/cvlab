@@ -29,10 +29,15 @@ int main(int argc, char **argv) {
     // std::cout << "View: " << view->id() << ". Keypoints: " << view->keypoints().size() << std::endl;
     // cv::Mat img_vis = view->visualizeKeypoints();
 
-    const CVKeyPoints &keypoints = scene.klt_tracker().tracked_keypoints();
-    cv::Mat img_vis = view->visualizeKeypoints(keypoints);
+    // const CVKeyPoints &keypoints = scene.klt_tracker().tracked_keypoints();
+    // cv::Mat img_vis = view->visualizeKeypoints(keypoints);
 
-    cv::imshow("keypoints", img_vis);
+    cv::Mat img_vis = scene.visualizeMatches();
+
+    if (!img_vis.empty()) {
+      cv::imshow("keypoints", img_vis);
+    }
+
   }, delay_ms);
 
   return 0;

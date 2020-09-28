@@ -1,6 +1,6 @@
 #include "logger.h"
 
-#include <stdarg.h>
+#include <cstdarg>
 #include <typeinfo>
 #include <android/log.h>
 
@@ -13,7 +13,7 @@
 }
 
 
-Logger::Logger(const char *tag) : tag_(tag) {
+Logger::Logger(const char *tag) noexcept : tag_(tag) {
     if (tag_ == nullptr) {
         tag_ = typeid(*this).name();
     }

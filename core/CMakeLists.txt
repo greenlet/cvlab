@@ -5,7 +5,7 @@ set(SRC_FILES
   src/utils.cpp
   src/view.cpp
   src/tracking/klt_tracker.cpp
-  src/tracking/cashash_tracker.cpp
+  src/matching/cashash_matcher.cpp
 )
 message(STATUS "SRC_FILES: ${SRC_FILES}")
 

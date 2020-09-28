@@ -7,6 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include <random>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 using CVKeyPoints = std::vector<cv::KeyPoint>;

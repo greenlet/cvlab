@@ -7,7 +7,7 @@ using KeyPointId = int;
 
 class View {
  public:
-  View(int id, cv::Mat img);
+  View(ViewId id, cv::Mat img);
 
   const CVKeyPoints& calcKeypoints();
   cv::Mat visualizeKeypoints(const CVKeyPoints& keypoints);

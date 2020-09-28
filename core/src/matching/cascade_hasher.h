@@ -34,62 +34,57 @@ class CascadeHasher {
     FeatureId feature1_id;
     FeatureId feature2_id;
     float distance;
+
+    Match(FeatureId feature1_id, FeatureId feature2_id, float distance)
+        : feature1_id(feature1_id), feature2_id(feature2_id), distance(distance) {}
   };
   using Matches = std::vector<Match>;
 
   class Container {
-    Container(FeaturesMat &&features, FeaturesHashesBucketIds &&features_hashes_bucket_ids,
-              FeaturesBucketGroups &&features_bucket_groups)
-        : features_(std::move(features)),
-          features_hashes_bucket_ids_(std::move(features_hashes_bucket_ids)),
-          features_bucket_groups_(std::move(features_bucket_groups)) {}
-
-    void match(const Container &other, Matches &matches, unsigned NN = 1) {
+   public:
+    void match(Container &other, Matches &matches, unsigned NN = 1) {
       matches.clear();
 
-      FeaturesHammingDistances features_hamming_distances(features_hashes_bucket_ids_.size());
+      FeaturesHammingDistances features_hamming_distances(features_hashes_bucket_ids_.size(),
+                                                          HashSize + 1);
       FeaturesNumHummingDistances features_num_hamming_distances;
       const unsigned kMaxNearestFeatures = 10;
       std::vector<std::pair<float, FeatureId>> dist_feature_candidates;
       dist_feature_candidates.reserve(kMaxNearestFeatures);
       features_hamming_distances.setZero();
 
-      unsigned features_offset = 0;
-      for (FeatureId feature1_id = 0; feature1_id < other.features_hashes_bucket_ids_.size();
-           feature1_id++) {
-        FeatureHash &feature1_hash = other.features_[feature1_id];
+      for (FeatureId feature2_id = 0; feature2_id < other.features_hashes_bucket_ids_.size();
+           feature2_id++) {
+        FeatureHash &feature2_hash = other.features_hashes_bucket_ids_[feature2_id].feature_hash;
         features_num_hamming_distances.fill(0);
         dist_feature_candidates.clear();
 
         BucketGroupsBucketIds &other_bgb_ids =
-            other.features_hashes_bucket_ids_[feature1_id].bucket_groups_bucket_ids;
+            other.features_hashes_bucket_ids_[feature2_id].bucket_groups_bucket_ids;
         for (unsigned i_bgroup = 0; i_bgroup < BucketGroupsSize; i_bgroup++) {
           BucketId bucket_id = other_bgb_ids[i_bgroup];
 
-          for (FeatureId feature2_id : features_bucket_groups_[i_bgroup][bucket_id]) {
-            FeatureHash &feature2_hash = features_[feature2_id];
-            unsigned ham_dist = (feature1_hash ^ feature2_hash).count();
-            unsigned i_feature2 = features_num_hamming_distances[ham_dist]++;
-            features_hamming_distances(i_feature2, ham_dist) = feature2_id;
+          for (FeatureId feature1_id : features_bucket_groups_[i_bgroup][bucket_id]) {
+            FeatureHash &feature1_hash = features_hashes_bucket_ids_[feature1_id].feature_hash;
+            unsigned ham_dist = (feature2_hash ^ feature1_hash).count();
+            unsigned i_feature1 = features_num_hamming_distances[ham_dist]++;
+            features_hamming_distances(i_feature1, ham_dist) = feature1_id;
           }
         }
-
-        unsigned features_offset_delta = 0;
 
         for (unsigned ham_dist = 0;
              ham_dist <= HashSize && dist_feature_candidates.size() <= kMaxNearestFeatures;
              ham_dist++) {
-          unsigned num_features2 = features_num_hamming_distances[ham_dist];
-          features_offset_delta += num_features2;
+          unsigned num_features1 = features_num_hamming_distances[ham_dist];
 
-          Feature feature1 = other.features_[feature1_id];
-          for (unsigned i_feature2 = 0;
-               i_feature2 < num_features2 && dist_feature_candidates.size() <= kMaxNearestFeatures;
-               i_feature2++) {
-            FeatureId feature2_id = features_hamming_distances(i_feature2, ham_dist);
-            Feature feature2 = other.features_[feature2_id];
-            float dist = (feature1 - feature2).norm();
-            dist_feature_candidates.emplace_back(dist, feature2_id);
+          Feature feature2 = other.features_.row(feature2_id);
+          for (unsigned i_feature1 = 0;
+               i_feature1 < num_features1 && dist_feature_candidates.size() <= kMaxNearestFeatures;
+               i_feature1++) {
+            FeatureId feature1_id = features_hamming_distances(i_feature1, ham_dist);
+            Feature feature1 = features_.row(feature1_id);
+            float dist = (feature2 - feature1).norm();
+            dist_feature_candidates.emplace_back(dist, feature1_id);
           }
         }
 
@@ -97,14 +92,26 @@ class CascadeHasher {
           std::partial_sort(dist_feature_candidates.begin(), dist_feature_candidates.begin() + NN,
                             dist_feature_candidates.end());
           for (unsigned i_match = 0; i_match < NN; i_match++) {
-            auto [cand_dist, cand_feature_id] = dist_feature_candidates[i_match];
-            matches.emplace(feature1_id, cand_feature_id, cand_dist);
+            const auto &cand = dist_feature_candidates[i_match];
+            matches.emplace_back(cand.second, feature2_id, cand.first);
           }
         }
-
-        features_offset += features_offset_delta;
       }
+
+      std::sort(matches.begin(), matches.end(), [](const Match &m1, const Match &m2) {
+        return m1.feature1_id == m2.feature1_id ? m1.distance < m2.distance : m1.feature1_id < m2.feature1_id;
+      });
+      auto last = std::unique(matches.begin(), matches.end(), [](const Match &m1, const Match &m2) {
+        return m1.feature1_id == m2.feature1_id;
+      });
+      matches.erase(last, matches.end());
     }
+
+    Container(FeaturesMat &&features, FeaturesHashesBucketIds &&features_hashes_bucket_ids,
+              FeaturesBucketGroups &&features_bucket_groups)
+        : features_(std::move(features)),
+          features_hashes_bucket_ids_(std::move(features_hashes_bucket_ids)),
+          features_bucket_groups_(std::move(features_bucket_groups)) {}
 
    private:
     FeaturesMat features_;
@@ -152,7 +159,7 @@ class CascadeHasher {
 
       for (unsigned i_bgroup = 0; i_bgroup < BucketGroupsSize; i_bgroup++) {
         FeatureBucketHashVec feature_bhash_vec =
-            bucket_groups_hash_feature_mats_[i_bgroup] * feature;
+            bucket_groups_hash_feature_mats_[i_bgroup] * feature.transpose();
         BucketId bucket_id = 0;
         for (BucketHashSizeT i_hash = 0; i_hash < BucketHashSize; i_hash++) {
           bucket_id = (bucket_id << 1) + (feature_bhash_vec[i_hash] > 0 ? 1 : 0);
