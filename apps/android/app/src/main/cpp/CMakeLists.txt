@@ -10,7 +10,9 @@ find_library(android-lib android)
 find_library(log-lib log)
 find_library(camera-lib camera2ndk)
 find_library(media-lib mediandk)
-find_library(gl-lib GLESv2)
+#find_library(gl-lib GLESv2)
+find_library(gl-lib GLESv3)
+#find_library(egl-lib EGL)
 
 set(OpenCV_DIR "${OPENCV_SDK_PATH}/native/jni/abi-${ANDROID_ABI}")
 message(STATUS "OpenCV_DIR: ${OpenCV_DIR}")
@@ -35,6 +37,8 @@ add_library(motion3d-android SHARED
         motion3d_app.cpp
         camera_android.cpp
         logger.cpp
+        gl_program.cpp
+        renderer.cpp
 )
 
 target_link_libraries(motion3d-android
@@ -43,6 +47,7 @@ target_link_libraries(motion3d-android
         ${camera-lib}
         ${media-lib}
         ${gl-lib}
+#        ${egl-lib}
         ${OpenCV_LIBRARIES}
         motion3d-core
         )
