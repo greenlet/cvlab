@@ -1,4 +1,6 @@
 #include "view.h"
+
+#include <opencv2/imgproc/imgproc.hpp>
 #include "utils.h"
 
 View::View(ViewId id, cv::Mat img) : id_(id), img_(img) {}
@@ -14,7 +16,11 @@ const CVKeyPoints& View::calcKeypoints() {
 cv::Mat View::visualizeKeypoints(const CVKeyPoints& keypoints) {
   cv::Mat res;
   if (!img_.empty()) {
-    cv::drawKeypoints(img_, keypoints, res);
+    // cv::drawKeypoints(img_, keypoints, res);
+    img_.copyTo(res);
+    for (const cv::KeyPoint& keypoint : keypoints) {
+      cv::circle(res, keypoint.pt, 6, cv::Scalar(200, 0, 0), cv::FILLED, 8, 0);
+    }
   }
   return res;
 }
@@ -41,6 +47,3 @@ ViewKeyPointId::ViewKeyPointId(ViewId view_id, KeyPointId keypoint_id)
     : view_id_(view_id), keypoint_id_(keypoint_id) {
   id_ = (view_id_ << 14) + keypoint_id_;
 }
-
-
-

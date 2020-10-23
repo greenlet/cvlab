@@ -1,5 +1,6 @@
 
 #include "tracking/klt_tracker.h"
+#include <opencv2/video/tracking.hpp>
 
 #include "utils.h"
 

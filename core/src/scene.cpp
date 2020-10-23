@@ -17,7 +17,8 @@ ViewPtr Scene::processImage(cv::Mat img) {
   }
 
   MatchesPtr matches;
-  if (views_.size() > 1) {
+  size_t nv = views_.size();
+  if (nv > 1) {
     matches = cashash_matcher_.match(*views_[nv - 2], *views_[nv - 1]);
   }
 
@@ -66,6 +67,7 @@ cv::Mat Scene::visualizeMatches() {
 
   ViewPtr view = views_[views_.size() - 1];
   CVKeyPoints keypoints;
+  std::cout << "!!!" << matches_->size() << std::endl;
   keypoints.reserve(matches_->size());
   for (const Match &match : *matches_) {
     KeyPointId kpt_id = std::get<1>(match);

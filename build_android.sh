@@ -3,8 +3,10 @@
 
 ANDROID_SDK_PATH=/home/misha/Android/Sdk
 ANDROID_NDK_PATH=$ANDROID_SDK_PATH/ndk/21.3.6528147
-OPENCV_ANDROID_SDK_PATH=/home/misha/prog/lib/OpenCV-android-sdk/sdk
 MIN_SDK_VERSION=24
+
+#OPENCV_ANDROID_SDK_PATH=/home/misha/prog/lib/OpenCV-android-sdk/sdk
+OPENCV_ANDROID_SDK_PATH=/home/misha/prog/lib/opencv-install/android/Release/sdk
 
 BUILD_TYPE=Release
 SRC_PATH=$(pwd)
