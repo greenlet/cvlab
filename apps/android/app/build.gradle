@@ -23,7 +23,9 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags "-std=c++17"
-                arguments "-DOPENCV_SDK_PATH=$opencvSdkPath"
+                arguments "-DOPENCV_SDK_PATH=$opencvSdkPath",
+                    "-DANDROID_TOOLCHAIN=clang",
+                    "-DANDROID_STL=c++_static"
             }
         }
     }

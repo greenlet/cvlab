@@ -12,5 +12,5 @@ message(STATUS "SRC_FILES: ${SRC_FILES}")
 add_library(motion3d_core ${SRC_FILES})
 
 include_directories(${OpenCV_INCLUDE_DIRS})
-target_link_libraries(motion3d_core ${OpenCV_LIBRARIES})
+target_link_libraries(motion3d_core PUBLIC ${OpenCV_LIBRARIES})
 
