@@ -52,6 +52,7 @@ class CascadeHasher {
       std::vector<std::pair<float, FeatureId>> dist_feature_candidates;
       dist_feature_candidates.reserve(kMaxNearestFeatures);
       features_hamming_distances.setZero();
+      std::vector<bool> used_features(features_hashes_bucket_ids_.size());
 
       for (FeatureId feature2_id = 0; feature2_id < other.features_hashes_bucket_ids_.size();
            feature2_id++) {
@@ -65,10 +66,21 @@ class CascadeHasher {
           BucketId bucket_id = other_bgb_ids[i_bgroup];
 
           for (FeatureId feature1_id : features_bucket_groups_[i_bgroup][bucket_id]) {
+            if (used_features[feature1_id]) {
+              continue;
+            }
+            used_features[feature1_id] = true;
             FeatureHash &feature1_hash = features_hashes_bucket_ids_[feature1_id].feature_hash;
             unsigned ham_dist = (feature2_hash ^ feature1_hash).count();
             unsigned i_feature1 = features_num_hamming_distances[ham_dist]++;
             features_hamming_distances(i_feature1, ham_dist) = feature1_id;
+          }
+        }
+
+        for (unsigned i_bgroup = 0; i_bgroup < BucketGroupsSize; i_bgroup++) {
+          BucketId bucket_id = other_bgb_ids[i_bgroup];
+          for (FeatureId feature1_id : features_bucket_groups_[i_bgroup][bucket_id]) {
+            used_features[feature1_id] = false;
           }
         }
 

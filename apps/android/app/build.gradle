@@ -5,8 +5,8 @@ apply plugin: 'kotlin-android-extensions'
 Properties properties = new Properties()
 def propertiesFile = project.rootProject.file('local.properties')
 properties.load(propertiesFile.newDataInputStream())
-def opencvSdkPath = properties.getProperty('opencv.sdk.path').toString()
-println "OpenCV SDK path: ${opencvSdkPath}"
+def opencvPath = properties.getProperty('opencv.path').toString()
+println "OpenCV path: ${opencvPath}"
 
 android {
     compileSdkVersion 30
@@ -23,8 +23,7 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags "-std=c++17"
-                arguments "-DOPENCV_SDK_PATH=$opencvSdkPath",
-                    "-DANDROID_TOOLCHAIN=clang",
+                arguments "-DANDROID_TOOLCHAIN=clang",
                     "-DANDROID_STL=c++_static"
             }
         }
@@ -32,8 +31,26 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            println("--> RELEASE!")
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            externalNativeBuild {
+                cmake {
+                    arguments "-DOPENCV_SDK_PATH=${opencvPath}/Release/sdk"
+                }
+            }
+        }
+        debug {
+            println("--> DEBUG!")
+            applicationIdSuffix ".debug"
+            debuggable true
+            externalNativeBuild {
+                cmake {
+//                    arguments "-DOPENCV_SDK_PATH=${opencvPath}/Debug/sdk"
+                    arguments "-DOPENCV_SDK_PATH=${opencvPath}/Release/sdk"
+//                        , "-DCMAKE_BUILD_TYPE=Release"
+                }
+            }
         }
     }
     externalNativeBuild {

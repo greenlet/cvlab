@@ -52,8 +52,14 @@ ViewPtr Scene::processImage(cv::Mat img) {
       } else {
         matches_ = matches;
       }
+      
+      assert(matches_->size() <= views_[nv - 2]->keypoints().size());
+      assert(matches_->size() <= views_[nv - 1]->keypoints().size());
+
       std::cout << "After filtering: " << matches_->size() << std::endl;
     }
+  } else {
+    matches_ = matches;
   }
 
   return view;

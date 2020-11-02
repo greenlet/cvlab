@@ -6,7 +6,8 @@
 View::View(ViewId id, cv::Mat img) : id_(id), img_(img) {}
 
 const CVKeyPoints& View::calcKeypoints() {
-  if (keypoints_.size() == 0) {
+  if (!keypoints_calculated_) {
+    keypoints_calculated_ = true;
     cv::Ptr<cv::ORB> orb = cv::ORB::create();
     orb->detectAndCompute(img_, cv::noArray(), keypoints_, descriptors_);
   }
@@ -28,7 +29,8 @@ cv::Mat View::visualizeKeypoints(const CVKeyPoints& keypoints) {
 cv::Mat View::visualizeKeypoints() { return visualizeKeypoints(keypoints_); }
 
 const CVMats& View::calcPyramid() {
-  if (pyramid_.size() == 0) {
+  if (!pyramid_calculated_) {
+    pyramid_calculated_ = true;
     calcGrayscale();
     cv::buildOpticalFlowPyramid(img_grayscale_, pyramid_, cv::Size(21, 21), 3);
   }

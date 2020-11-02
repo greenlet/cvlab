@@ -192,17 +192,20 @@ void Renderer::drawFrame() {
 }
 
 void Renderer::newImage_ext(cv::Mat image_rgb) {
+  D("newImage_ext lock");
   std::lock_guard<std::mutex> lock(mutex_ext_);
 //  D("drawImage. win: %d x %d. image: %d x %d. initialized: %d. texture initialized: %d",
 //    win_width_, win_height_, image_width_, image_height_, initialized_, texture_initialized_);
   image_rgb_ext_ = std::move(image_rgb);
   image_updated_ext_ = true;
+  D("newImage_ext unlock");
 }
 
 void Renderer::updateImage() {
+//  D("updateImage lock");
   std::lock_guard<std::mutex> lock(mutex_ext_);
   if (image_updated_ext_) {
-    image_rgb_ = std::move(image_rgb_ext_);
+    image_rgb_ = image_rgb_ext_;
     image_updated_ext_ = false;
     image_updated_ = true;
   }

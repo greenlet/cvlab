@@ -27,8 +27,10 @@ class View {
   cv::Mat img_;
   cv::Mat img_grayscale_;
   CVKeyPoints keypoints_;
+  bool keypoints_calculated_ = false;
   CVDescriptors descriptors_;
   CVMats pyramid_;
+  bool pyramid_calculated_ = false;
 };
 
 using ViewPtr = std::shared_ptr<View>;

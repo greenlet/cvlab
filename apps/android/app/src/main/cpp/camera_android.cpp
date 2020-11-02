@@ -198,7 +198,15 @@ void CameraAndroid::onError(ACameraDevice *device, int error) {
 }
 
 void CameraAndroid::onNewImage(AImageReader *image_reader) {
+  D("onNewImage before lock. started_: %d");
+  std::unique_lock<std::mutex> lock(cam_mutex_);
+  D("onNewImage started_: %d", started_);
+  if (!started_) {
+    clear();
+    return;
+  }
   AImage *image_src;
+  D("AImageReader_acquireNextImage");
   AImageReader_acquireNextImage(image_reader, &image_src);
 
   int32_t width, height, format;
@@ -222,32 +230,34 @@ void CameraAndroid::onNewImage(AImageReader *image_reader) {
 
   int buf_len = y_len + u_len + v_len;
   bool rotate = (camera_props_.orientation / 90) % 2 == 1;
-  {
-    std::lock_guard<std::mutex> lock(cam_mutex_);
-    if (!started_) {
-      return;
-    }
-    if (image_buffer_len_ != buf_len) {
-      if (image_buffer_len_ > 0) {
-        delete[] image_buffer_;
-      }
-      image_buffer_ = new uint8_t[buf_len];
-      image_buffer_len_ = buf_len;
-    }
+  if (image_buffer_len_ != buf_len) {
+    D("Allocating buffer");
 
-    memcpy(image_buffer_, y_pixel, y_len);
-    memcpy(image_buffer_ + y_len, u_pixel, u_len);
-    memcpy(image_buffer_ + y_len + u_len, v_pixel, v_len);
-
-    cv::Mat image_yuv;
-    if (rotate) {
-      image_yuv = cv::Mat(height + height / 2, width, CV_8UC1, image_buffer_);
-    } else {
-      image_yuv = cv::Mat(height, width + width / 2, CV_8UC1, image_buffer_);
+    if (image_buffer_len_ > 0) {
+      delete[] image_buffer_;
     }
-    cv::cvtColor(image_yuv, image_rgb, cv::COLOR_YUV2RGB_NV21, 3);
+    image_buffer_ = new uint8_t[buf_len];
+    image_buffer_len_ = buf_len;
   }
+
+  D("Copying to buffer");
+  memcpy(image_buffer_, y_pixel, y_len);
+  memcpy(image_buffer_ + y_len, u_pixel, u_len);
+  memcpy(image_buffer_ + y_len + u_len, v_pixel, v_len);
+
+  D("AImage_delete");
   AImage_delete(image_src);
+  lock.unlock();
+
+  D("YUV -> RGB");
+  cv::Mat image_yuv;
+  if (rotate) {
+    image_yuv = cv::Mat(height + height / 2, width, CV_8UC1, image_buffer_);
+  } else {
+    image_yuv = cv::Mat(height, width + width / 2, CV_8UC1, image_buffer_);
+  }
+  cv::cvtColor(image_yuv, image_rgb, cv::COLOR_YUV2RGB_NV21, 3);
+
   if (rotate) {
     cv::rotate(image_rgb, image_rgb, cv::ROTATE_90_COUNTERCLOCKWISE);
   }
@@ -258,6 +268,7 @@ void CameraAndroid::onNewImage(AImageReader *image_reader) {
 //    format, y_len, u_len, v_len, buf_len, width, height, (width + width / 2) * height);
 //  D("y: %p - %p. u: %p - %p. v: %p - %p", y_pixel, y_pixel + y_len - 1, u_pixel, u_pixel + u_len - 1, v_pixel, v_pixel + v_len - 1);
 
+  D("callback");
   callback_(image_rgb);
 }
 
@@ -352,6 +363,7 @@ void CameraAndroid::start() {
 }
 
 void CameraAndroid::clear() {
+  D("clear started!");
   if (image_buffer_ != nullptr) {
     delete[] image_buffer_;
     image_buffer_ = nullptr;
@@ -360,50 +372,62 @@ void CameraAndroid::clear() {
 
   if (capture_session_ != nullptr) {
     if (capturing_started_) {
+      D("ACameraCaptureSession_abortCaptures");
       ACameraCaptureSession_abortCaptures(capture_session_);
       capturing_started_ = false;
     }
+    D("ACameraCaptureSession_close");
     ACameraCaptureSession_close(capture_session_);
     capture_session_ = nullptr;
   }
   if (capture_outputs_ != nullptr) {
+    D("ACaptureSessionOutputContainer_free");
     ACaptureSessionOutputContainer_free(capture_outputs_);
     capture_outputs_ = nullptr;
   }
   if (capture_output_ != nullptr) {
+    D("ACaptureSessionOutput_free");
     ACaptureSessionOutput_free(capture_output_);
     capture_output_ = nullptr;
   }
   if (capture_request_ != nullptr) {
+    D("ACaptureRequest_free");
     ACaptureRequest_free(capture_request_);
     capture_request_ = nullptr;
   }
   if (output_target_ != nullptr) {
+    D("ACameraOutputTarget_free");
     ACameraOutputTarget_free(output_target_);
     output_target_ = nullptr;
   }
   if (image_reader_ != nullptr) {
+    D("AImageReader_delete");
     AImageReader_delete(image_reader_);
     image_reader_ = nullptr;
     image_window_ = nullptr;
   }
   if (camera_device_ != nullptr) {
+    D("ACameraDevice_close");
     ACameraDevice_close(camera_device_);
     camera_device_ = nullptr;
   }
   if (camera_manager_ != nullptr) {
+    D("ACameraManager_delete");
     ACameraManager_delete(camera_manager_);
     camera_manager_ = nullptr;
   }
+  D("clear stopped!");
 }
 
 void CameraAndroid::stop() {
+  D("stop. before lock started_ = %d", started_);
   std::lock_guard<std::mutex> lock(cam_mutex_);
+  D("stop. started_ = %d", started_);
   if (!started_) {
     return;
   }
   started_ = false;
 
-  clear();
+//  clear();
 }
 

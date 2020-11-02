@@ -5,17 +5,17 @@ ANDROID_SDK_PATH=/home/misha/Android/Sdk
 ANDROID_NDK_PATH=$ANDROID_SDK_PATH/ndk/21.3.6528147
 MIN_SDK_VERSION=24
 
-#OPENCV_ANDROID_SDK_PATH=/home/misha/prog/lib/OpenCV-android-sdk/sdk
-OPENCV_ANDROID_SDK_PATH=/home/misha/prog/lib/opencv-install/android/Release/sdk
 
-BUILD_TYPE=Release
+BUILD_TYPE=Debug
+# BUILD_TYPE=Release
 SRC_PATH=$(pwd)
+OPENCV_ANDROID_SDK_PATH=/home/misha/prog/lib/opencv-install/android/$BUILD_TYPE/sdk
 
 
 function build() {
     ABI=$1
     BUILD_PATH=$SRC_PATH/build-android/$BUILD_TYPE/$ABI
-    OUT_LIB_PATH=$SRC_PATH/apps/android/app/libs/$ABI
+    OUT_LIB_PATH=$SRC_PATH/apps/android/app/libs/$BUILD_TYPE/$ABI
     mkdir -p $BUILD_PATH && cd $BUILD_PATH
     cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_PATH/build/cmake/android.toolchain.cmake \
         -DANDROID_ABI=$ABI \

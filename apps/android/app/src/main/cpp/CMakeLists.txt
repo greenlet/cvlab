@@ -29,7 +29,7 @@ include_directories(${CPP_SOURCE_DIR}/core/src)
 
 add_library(motion3d-core STATIC IMPORTED)
 set_target_properties(motion3d-core PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_SOURCE_DIR}/../../../libs/${ANDROID_ABI}/libmotion3d_core.a)
+        ${CMAKE_SOURCE_DIR}/../../../libs/${CMAKE_BUILD_TYPE}/${ANDROID_ABI}/libmotion3d_core.a)
 
 
 add_library(motion3d-android SHARED
