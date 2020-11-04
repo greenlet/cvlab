@@ -1,8 +1,7 @@
 {
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    "clang-format.executable": "${workspaceRoot}/.clang-format",
     "cmake.configureSettings": {
-        "OpenCV_DIR": "/home/misha/prog/lib/opencv/install/lib/cmake/opencv4"
+        "OpenCV_DIR": "/home/misha/prog/lib/opencv-install/linux/Release/lib/cmake/opencv4"
     },
     "files.associations": {
         "array": "cpp",
@@ -85,7 +84,15 @@
         "numericaldiff": "cpp",
         "openglsupport": "cpp",
         "specialfunctions": "cpp",
-        "splines": "cpp"
-    }
+        "splines": "cpp",
+        "bit": "cpp"
+    },
+    "[cpp]": {
+        "editor.wordBasedSuggestions": false,
+        "editor.suggest.insertMode": "replace",
+        "editor.semanticHighlighting.enabled": true,
+        "editor.tabSize": 4
+    },
+    "cmake.configureOnOpen": true
 }
 

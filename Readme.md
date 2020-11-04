@@ -1,4 +1,4 @@
-# Motion 3d
+# CV Lab
 Create 3d models from video
 
 ## Android

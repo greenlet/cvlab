@@ -5,10 +5,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "(gdb) motion3d",
+      "name": "(gdb) CVLab Tracking",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/apps/desktop/motion3d",
+      "program": "${workspaceFolder}/build/apps/desktop/cvlab_tracking",
       "args": ["${workspaceFolder}/../data/P01_08.MP4", "1000"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",

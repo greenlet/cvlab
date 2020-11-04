@@ -27,21 +27,21 @@ include_directories(${EIGEN_SRC_DIR})
 include_directories(${CPP_SOURCE_DIR}/core/src)
 
 
-add_library(motion3d-core STATIC IMPORTED)
-set_target_properties(motion3d-core PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_SOURCE_DIR}/../../../libs/${CMAKE_BUILD_TYPE}/${ANDROID_ABI}/libmotion3d_core.a)
+add_library(cvlab-core STATIC IMPORTED)
+set_target_properties(cvlab-core PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_SOURCE_DIR}/../../../libs/${CMAKE_BUILD_TYPE}/${ANDROID_ABI}/libcvlab_core.a)
 
 
-add_library(motion3d-android SHARED
-        motion3d_interface.cpp
-        motion3d_app.cpp
+add_library(cvlab-android SHARED
+        cvlab_interface.cpp
+        cvlab_app.cpp
         camera_android.cpp
         logger.cpp
         gl_program.cpp
         renderer.cpp
 )
 
-target_link_libraries(motion3d-android
+target_link_libraries(cvlab-android
         ${android-lib}
         ${log-lib}
         ${camera-lib}
@@ -49,7 +49,7 @@ target_link_libraries(motion3d-android
         ${gl-lib}
 #        ${egl-lib}
         ${OpenCV_LIBRARIES}
-        motion3d-core
+        cvlab-core
         )
 
 

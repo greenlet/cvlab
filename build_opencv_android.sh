@@ -13,8 +13,8 @@ CONTRIB_SRC_PATH=/home/misha/prog/lib/opencv_contrib
 BUILD_ROOT_PATH=/home/misha/prog/lib/opencv-build/android
 INSTALL_ROOT_PATH=/home/misha/prog/lib/opencv-install/android
 
-BUILD_TYPE=Debug
-# BUILD_TYPE=Release
+# BUILD_TYPE=Debug
+BUILD_TYPE=Release
 
 
 function build() {

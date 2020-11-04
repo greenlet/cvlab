@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/nav_graph"
+        app:startDestination="@id/mainFragment">
+
+    <fragment
+            android:id="@+id/mainFragment"
+            android:name="ai.cvlab.MainFragment"
+            android:label="fragment_main"
+            tools:layout="@layout/fragment_main">
+        <action
+                android:id="@+id/action_mainFragment_to_calibrationFragment"
+                app:destination="@id/calibrationFragment"
+                app:enterAnim="@anim/slide_in_right"
+                app:exitAnim="@anim/slide_out_left"
+                app:popEnterAnim="@android:anim/slide_in_left"
+                app:popExitAnim="@android:anim/slide_out_right" />
+        <action
+                android:id="@+id/action_mainFragment_to_depthFragment"
+                app:destination="@id/depthFragment"
+                app:enterAnim="@anim/slide_in_right"
+                app:exitAnim="@anim/slide_out_left"
+                app:popEnterAnim="@android:anim/slide_in_left"
+                app:popExitAnim="@android:anim/slide_out_right" />
+    </fragment>
+
+    <fragment
+            android:id="@+id/calibrationFragment"
+            android:name="ai.cvlab.CalibrationFragment"
+            android:label="fragment_calibration"
+            tools:layout="@layout/fragment_calibration" />
+
+    <fragment
+            android:id="@+id/depthFragment"
+            android:name="ai.cvlab.DepthFragment"
+            android:label="fragment_depth"
+            tools:layout="@layout/fragment_depth" />
+</navigation>

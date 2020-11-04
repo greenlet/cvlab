@@ -10,18 +10,17 @@ CVImageLoop::CVImageLoop(const std::string &file_name, CVImageCallback callback,
 CVImageLoop::CVImageLoop(const std::string &file_name, std::shared_ptr<CVImageProcessor> processor,
                          int delay_ms)
     : file_name_(file_name), processor_(processor), delay_ms_(delay_ms) {
-  auto cap = cv::VideoCapture(file_name_, cv::CAP_ANY);
-  cv::Mat frame;
-  while (cap.isOpened()) {
-    if (!cap.read(frame)) {
-      continue;
-    }
+    auto cap = cv::VideoCapture(file_name_, cv::CAP_ANY);
+    cv::Mat frame;
+    while (cap.isOpened()) {
+        if (!cap.read(frame)) {
+            continue;
+        }
     processor_->process(frame);
 
-    int pressed_key = cv::waitKey(delay_ms_);
-    if (pressed_key == 'q' || pressed_key == 'Q') {
-      break;
+        int pressed_key = cv::waitKey(delay_ms_);
+        if (pressed_key == 'q' || pressed_key == 'Q') {
+            break;
+        }
     }
-  }
 }
-

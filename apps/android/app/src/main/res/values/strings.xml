@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">Motion 3D</string>
+    <string name="app_name">CV Lab</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="calibrate_camera">Calibrate Camera</string>
+    <string name="show_depth">Show Depth</string>
 </resources>

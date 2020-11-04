@@ -1,3 +1,4 @@
 
-add_subdirectory(desktop)
+add_subdirectory(desktop_tracking)
+add_subdirectory(desktop_calib)
 
