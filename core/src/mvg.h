@@ -1,8 +1,8 @@
 #pragma once
 
 class MVG {
-   public:
+  public:
     MVG();
 
-   private:
+  private:
 };

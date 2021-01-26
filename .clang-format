@@ -5,4 +5,5 @@ BasedOnStyle: Google
 Language: Cpp
 ColumnLimit: 100
 IndentWidth: 4
+AccessModifierOffset: -2
 

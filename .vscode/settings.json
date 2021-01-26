@@ -1,4 +1,5 @@
 {
+    "clang-format.executable": "clang-format",
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "cmake.configureSettings": {
         "OpenCV_DIR": "/home/misha/prog/lib/opencv-install/linux/Release/lib/cmake/opencv4"
@@ -85,7 +86,8 @@
         "openglsupport": "cpp",
         "specialfunctions": "cpp",
         "splines": "cpp",
-        "bit": "cpp"
+        "bit": "cpp",
+        "dense": "cpp"
     },
     "[cpp]": {
         "editor.wordBasedSuggestions": false,

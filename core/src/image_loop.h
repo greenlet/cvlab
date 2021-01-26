@@ -5,31 +5,31 @@
 using CVImageCallback = std::function<void(const cv::Mat img)>;
 
 class CVImageProcessor {
-   protected:
+  protected:
     virtual void process(cv::Mat img) = 0;
 
     friend class CVImageLoop;
 };
 
 class CVImageProcessorImpl : public CVImageProcessor {
-   public:
+  public:
     CVImageProcessorImpl(CVImageCallback callback);
 
-   protected:
+  protected:
     virtual void process(cv::Mat img) override;
 
-   private:
+  private:
     CVImageCallback callback_;
 };
 
 class CVImageLoop {
-   public:
+  public:
     CVImageLoop(const std::string &file_name, CVImageCallback callback, int waiting_ms = 0);
     CVImageLoop(const std::string &file_name, std::shared_ptr<CVImageProcessor> Processor,
                 int waiting_ms = 0);
 
-   private:
-    std::string file_name_;
+  private:
+    std::string file_path_;
     std::shared_ptr<CVImageProcessor> processor_;
     int delay_ms_;
 };

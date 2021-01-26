@@ -8,7 +8,7 @@
 KLTTracker::KLTTracker() {}
 
 void KLTTracker::processView(ViewPtr view) {
-    const CVKeyPoints &cur_keypoints = view->calcKeypoints();
+    const CVKeyPoints &cur_keypoints = view->orb_features_collection()->keypoints();
     view->calcPyramid();
 
     if (!last_view_) {

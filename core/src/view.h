@@ -1,49 +1,64 @@
 #pragma once
 
 #include "common.h"
+#include "features_collection.h"
 
 using ViewId = int;
 using KeyPointId = int;
 
 class View {
-   public:
+  public:
     View(ViewId id, cv::Mat img);
 
-    const CVKeyPoints& calcKeypoints();
     cv::Mat visualizeKeypoints(const CVKeyPoints& keypoints);
-    cv::Mat visualizeKeypoints();
+    cv::Mat visualizeOrbKeypoints();
     const CVMats& calcPyramid();
     const cv::Mat& calcGrayscale();
 
     const ViewId id() const { return id_; }
     const cv::Mat& img() const { return img_; }
-    const CVKeyPoints& keypoints() const { return keypoints_; }
-    const CVDescriptors& descriptors() const { return descriptors_; }
-    const CVMats& pyramid() const { return pyramid_; }
-    const cv::Mat& img_grayscale() const { return img_grayscale_; }
 
-   private:
+    // TODO: bring consistensy to pyramid, grayscale and orb_features_collection calculations
+    const CVMats& pyramid() {
+        calcPyramid();
+        return pyramid_;
+    }
+    const cv::Mat& img_grayscale() {
+        calcGrayscale();
+        return img_grayscale_;
+    }
+
+    const ORBFeaturesCollectionPtr calcORBFeaturesCollection(int nfeatures = 2000);
+
+    const ORBFeaturesCollectionPtr orb_features_collection() {
+        if (!orb_features_collection_) {
+            calcORBFeaturesCollection();
+        }
+        return orb_features_collection_;
+    }
+
+  private:
     ViewId id_;
     cv::Mat img_;
     cv::Mat img_grayscale_;
-    CVKeyPoints keypoints_;
-    bool keypoints_calculated_ = false;
-    CVDescriptors descriptors_;
     CVMats pyramid_;
     bool pyramid_calculated_ = false;
+
+    ORBFeaturesCollectionPtr orb_features_collection_;
 };
 
 using ViewPtr = std::shared_ptr<View>;
+using ViewPtrs = std::vector<ViewPtr>;
 
 class ViewKeyPointId {
-   public:
+  public:
     ViewKeyPointId(ViewId view_id, KeyPointId keypoint_id);
 
     ViewId view_id() const { return view_id_; }
     KeyPointId keypoint_id() const { return keypoint_id_; }
     int id() const { return id_; }
 
-   private:
+  private:
     ViewId view_id_;
     KeyPointId keypoint_id_;
     int id_;

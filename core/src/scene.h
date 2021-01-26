@@ -6,7 +6,7 @@
 #include "view.h"
 
 class Scene {
-   public:
+  public:
     Scene();
 
     ViewPtr processImage(cv::Mat img);
@@ -16,7 +16,7 @@ class Scene {
     const KLTTracker& klt_tracker() const { return klt_tracker_; }
     const CashashMatcher& cashash_matcher() const { return cashash_matcher_; }
 
-   private:
+  private:
     int next_view_id_;
     std::vector<ViewPtr> views_;
     KLTTracker klt_tracker_;

@@ -8,8 +8,27 @@
       "name": "(gdb) CVLab Tracking",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/apps/desktop/cvlab_tracking",
-      "args": ["${workspaceFolder}/../data/P01_08.MP4", "1000"],
+      "program": "${workspaceFolder}/build/apps/desktop_tracking/cvlab_tracking",
+      "args": ["${workspaceFolder}/../data/P01_08.MP4", "1"],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    },
+    {
+      "name": "(gdb) CVLab Calibration",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/apps/desktop_calibration/cvlab_calibration",
+      "args": ["${workspaceFolder}/../data/P01_08.MP4"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],

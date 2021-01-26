@@ -4,28 +4,20 @@
 #include "utils.h"
 
 MatchesPtr CashashMatcher::match(View &view1, View &view2) {
-    view1.calcKeypoints();
-    view2.calcKeypoints();
 
+    // TODO: Move features_collection out of here. Only ids and features make sense
     MatchesPtr res;
-    const CVDescriptors &desc1 = view1.descriptors();
-    const CVDescriptors &desc2 = view2.descriptors();
-    if (desc1.rows == 0 || desc2.rows == 0) {
+    const ORBFeaturesCollectionPtr &feat_coll1 = view1.orb_features_collection();
+    const ORBFeaturesCollectionPtr &feat_coll2 = view2.orb_features_collection();
+    if (feat_coll1->empty() || feat_coll2->empty()) {
         return res;
     }
 
-    ORBCascadeHasher::FeaturesMat features1(desc1.rows, desc1.cols);
-    ORBCascadeHasher::FeaturesMat features2(desc2.rows, desc2.cols);
+    std::cout << "Features1 w x h: " << feat_coll1->features()->cols() << " x " << feat_coll1->features()->rows() << std::endl;
+    std::cout << "Features2 w x h: " << feat_coll2->features()->cols() << " x " << feat_coll2->features()->rows() << std::endl;
 
-    std::cout << "Descriptors: " << cvmat2str(view1.descriptors()) << std::endl;
-
-    cv2eigen(view1.descriptors(), features1);
-    cv2eigen(view2.descriptors(), features2);
-
-    std::cout << "Features w x h: " << features1.cols() << " x " << features1.rows() << std::endl;
-
-    ORBCascadeHasher::ContainerPtr container1 = cascade_hasher_.make_hash(std::move(features1));
-    ORBCascadeHasher::ContainerPtr container2 = cascade_hasher_.make_hash(std::move(features2));
+    ORBCascadeHasher::ContainerPtr container1 = cascade_hasher_.make_hash(feat_coll1->features());
+    ORBCascadeHasher::ContainerPtr container2 = cascade_hasher_.make_hash(feat_coll2->features());
     ORBCascadeHasher::Matches matches;
     container1->match(*container2, matches);
     std::cout << "Matches: " << matches.size() << std::endl;

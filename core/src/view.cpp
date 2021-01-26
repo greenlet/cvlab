@@ -6,15 +6,6 @@
 
 View::View(ViewId id, cv::Mat img) : id_(id), img_(img) {}
 
-const CVKeyPoints& View::calcKeypoints() {
-    if (!keypoints_calculated_) {
-        keypoints_calculated_ = true;
-        cv::Ptr<cv::ORB> orb = cv::ORB::create();
-        orb->detectAndCompute(img_, cv::noArray(), keypoints_, descriptors_);
-    }
-    return keypoints_;
-}
-
 cv::Mat View::visualizeKeypoints(const CVKeyPoints& keypoints) {
     cv::Mat res;
     if (!img_.empty()) {
@@ -27,7 +18,15 @@ cv::Mat View::visualizeKeypoints(const CVKeyPoints& keypoints) {
     return res;
 }
 
-cv::Mat View::visualizeKeypoints() { return visualizeKeypoints(keypoints_); }
+cv::Mat View::visualizeOrbKeypoints() {
+    if (!orb_features_collection_) {
+        calcORBFeaturesCollection();
+    }
+    if (orb_features_collection_->empty()) {
+        return img_;
+    }
+    return visualizeKeypoints(orb_features_collection()->keypoints());
+}
 
 const CVMats& View::calcPyramid() {
     if (!pyramid_calculated_) {
@@ -39,11 +38,17 @@ const CVMats& View::calcPyramid() {
 }
 
 const cv::Mat& View::calcGrayscale() {
-    if (!img_grayscale_.empty()) {
-        return img_grayscale_;
+    if (img_grayscale_.empty()) {
+        cv::cvtColor(img_, img_grayscale_, cv::COLOR_BGR2GRAY);
     }
-    cv::cvtColor(img_, img_grayscale_, cv::COLOR_BGR2GRAY);
     return img_grayscale_;
+}
+
+const ORBFeaturesCollectionPtr View::calcORBFeaturesCollection(int nfeatures) {
+    std::cout << "calcORBFeaturesCollection: " << nfeatures << std::endl;
+    orb_features_collection_ =
+        std::make_shared<ORBFeaturesCollection>(img_, FeatureType::ORB, nfeatures);
+    return orb_features_collection_;
 }
 
 ViewKeyPointId::ViewKeyPointId(ViewId view_id, KeyPointId keypoint_id)

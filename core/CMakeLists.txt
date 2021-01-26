@@ -6,6 +6,7 @@ set(SRC_FILES
   src/view.cpp
   src/tracking/klt_tracker.cpp
   src/matching/cashash_matcher.cpp
+  src/calibrator.cpp
 )
 message(STATUS "SRC_FILES: ${SRC_FILES}")
 

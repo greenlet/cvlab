@@ -4,7 +4,7 @@
 #include "view.h"
 
 class KLTTracker {
-   public:
+  public:
     KLTTracker();
 
     void processView(ViewPtr view);
@@ -12,7 +12,7 @@ class KLTTracker {
     const CVKeyPoints& tracked_keypoints() const { return tracked_keypoints_; }
     const CVPoints2f& tracked_points() const { return tracked_points_; }
 
-   private:
+  private:
     ViewPtr last_view_;
     CVKeyPoints tracked_keypoints_;
     CVPoints2f tracked_points_;
