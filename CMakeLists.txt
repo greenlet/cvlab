@@ -12,6 +12,8 @@ endif()
 find_package(OpenCV REQUIRED)
 message(STATUS "OpenCV include dirs: ${OpenCV_INCLUDE_DIRS}")
 
+find_package(Ceres REQUIRED)
+
 include_directories(external/eigen)
 
 include_directories(${PROJECT_SOURCE_DIR}/core/src)

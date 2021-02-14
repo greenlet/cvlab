@@ -33,6 +33,8 @@ int main(int argc, char **argv) {
             continue;
         }
 
+        std::cout << "Frame size w x h: " << frame.size().width << " x " << frame.size().height << std::endl;
+
         double time_from_last_used_frame_ms = (frame_ind - last_used_frame_ind) / fps * 1000;
         if (last_used_frame_ind < 0 || time_from_last_used_frame_ms >= inter_frame_step_ms) {
             // std::cout << "Frame: " << frame_ind << ". Time ms: " << std::setprecision(3)
@@ -46,7 +48,7 @@ int main(int argc, char **argv) {
     }
 
     calib.calc();
-    cv::Mat &view_kpts = calib.views_keypoints();
+    cv::Mat &view_kpts = calib.views_kpts();
 
     std::cout << "Views total: " << calib.views().size() << std::endl;
     std::cout << "Views keypoints: " << view_kpts.size << std::endl;

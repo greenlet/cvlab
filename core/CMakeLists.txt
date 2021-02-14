@@ -13,5 +13,7 @@ message(STATUS "SRC_FILES: ${SRC_FILES}")
 add_library(cvlab_core ${SRC_FILES})
 
 include_directories(${OpenCV_INCLUDE_DIRS})
-target_link_libraries(cvlab_core PUBLIC ${OpenCV_LIBRARIES})
+include_directories(${CERES_INCLUDE_DIRS})
+
+target_link_libraries(cvlab_core PUBLIC ${OpenCV_LIBRARIES} ${CERES_LIBRARIES})
 
