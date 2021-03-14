@@ -6,8 +6,12 @@ apply plugin: "androidx.navigation.safeargs.kotlin"
 Properties properties = new Properties()
 def propertiesFile = project.rootProject.file('local.properties')
 properties.load(propertiesFile.newDataInputStream())
+def eigen3Path = properties.getProperty('eigen3.path').toString()
+def ceresPath = properties.getProperty('ceres.path').toString()
 def opencvPath = properties.getProperty('opencv.path').toString()
 def prodKeystorePassword = properties.getProperty('prod.keystore.password').toString()
+println "Eigen3 path: ${eigen3Path}"
+println "Ceres path: ${ceresPath}"
 println "OpenCV path: ${opencvPath}"
 
 android {
@@ -69,7 +73,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             externalNativeBuild {
                 cmake {
-                    arguments "-DOPENCV_SDK_PATH=${opencvPath}/Release/sdk",
+                    arguments "-DEIGEN3_PATH=${eigen3Path}/Release",
+                            "-DCERES_PATH=${ceresPath}/Release",
+                            "-DOPENCV_SDK_PATH=${opencvPath}/Release/sdk",
                             "-DCMAKE_BUILD_TYPE=Release"
                 }
             }
@@ -80,8 +86,11 @@ android {
             debuggable true
             externalNativeBuild {
                 cmake {
-//                    arguments "-DOPENCV_SDK_PATH=${opencvPath}/Debug/sdk"
-                    arguments "-DOPENCV_SDK_PATH=${opencvPath}/Release/sdk"
+                    arguments "-DEIGEN3_PATH=${eigen3Path}/Release",
+                            "-DCERES_PATH=${ceresPath}/Release",
+                            "-DOPENCV_SDK_PATH=${opencvPath}/Release/sdk",
+                            "-DCMAKE_BUILD_TYPE=Release"
+
                 }
             }
             signingConfig signingConfigs.debug

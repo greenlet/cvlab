@@ -1,8 +1,14 @@
 #!/bin/bash
 
+set -e
+
 LIB_PATH=~/prog/lib
 OPENCV_PATH=$LIB_PATH/opencv
 OPENCV_CONTRIB_PATH=$LIB_PATH/opencv_contrib
+OPENCV_VERSION=4.5.1
+# OPENCV_VERSION=3.1.0
+Eigen3_DIR=$LIB_PATH/eigen-install/linux/3.3.9/Release/share/eigen3/cmake
+Ceres_DIR=$LIB_PATH/ceres-install/linux/2.0.0/Release/lib/cmake/Ceres
 
 BUILD_TYPE=Release
 
@@ -42,20 +48,24 @@ function install_prerequisites() {
     # Optional libraries
     sudo apt-get install -y libprotobuf-dev protobuf-compiler
     sudo apt-get install -y libgoogle-glog-dev libgflags-dev
-    sudo apt-get install -y libgphoto2-dev libeigen3-dev libhdf5-dev doxygen    
+    sudo apt-get install -y libgphoto2-dev libhdf5-dev doxygen    
 
+    # sudo apt-get install -y libeigen3-dev
 }
 
 
 function build() {
-    BUILD_PATH=$LIB_PATH/opencv-build/linux/$BUILD_TYPE
-    INSTALL_PATH=$LIB_PATH/opencv-install/linux/$BUILD_TYPE
+    BUILD_PATH=$LIB_PATH/opencv-build/linux/$OPENCV_VERSION/$BUILD_TYPE
+    INSTALL_PATH=$LIB_PATH/opencv-install/linux/$OPENCV_VERSION/$BUILD_TYPE
     rm -rf $BUILD_PATH $INSTALL_PATH
     mkdir -p $BUILD_PATH && cd $BUILD_PATH
     cmake -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
         -DWITH_CUDA=ON \
+        -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda \
         -DCUDNN_INCLUDE_DIR=/usr/include \
         -DCUDNN_LIBRARY=/usr/lib/x86_64-linux-gnu/libcudnn.so.8 \
+        -DEigen3_DIR=$Eigen3_DIR \
+        -DCeres_DIR=$Ceres_DIR \
         -DBUILD_PERF_TESTS=OFF \
         -DBUILD_TESTS=OFF \
         -DBUILD_DOCS=OFF \
@@ -72,5 +82,9 @@ function build() {
 }
 
 # install_prerequisites
+
+cd $OPENCV_PATH && git checkout $OPENCV_VERSION
+cd $OPENCV_CONTRIB_PATH && git checkout $OPENCV_VERSION
+
 build
 

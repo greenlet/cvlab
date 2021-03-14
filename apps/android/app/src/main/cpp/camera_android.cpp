@@ -240,10 +240,12 @@ void CameraAndroid::onNewImage(AImageReader *image_reader) {
     }
     cv::cvtColor(image_yuv, image_rgb, cv::COLOR_YUV2RGB_NV21, 3);
 
-    if (rotate) {
-        cv::rotate(image_rgb, image_rgb, cv::ROTATE_90_COUNTERCLOCKWISE);
-    }
+    // TODO: Different for emulator
     cv::flip(image_rgb, image_rgb, 1);
+
+    if (rotate) {
+        cv::rotate(image_rgb, image_rgb, cv::ROTATE_90_CLOCKWISE);
+    }
     cv::cvtColor(image_rgb, image_rgb, cv::COLOR_BGR2RGB);
 
     //  D("onNewImage: format = %d. y = %d, u = %d, v = %d. y + u + v = %d. width = %d, height =

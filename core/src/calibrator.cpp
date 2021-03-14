@@ -2,7 +2,7 @@
 
 #include <ceres/ceres.h>
 
-Calibrator::Calibrator() : num_views_(0), num_kpts_(0), img_size_{0, 0} {}
+Calibrator::Calibrator() : num_views_(0), num_kpts_(0), image_width_(0), image_height_(0) {}
 
 Calibrator::~Calibrator() {
     deinitPosesDepths();
@@ -12,9 +12,12 @@ void Calibrator::addView(ViewPtr view) {
     views_.push_back(view);
     num_views_++;
     if (num_views_ == 1) {
-        img_size_ = views_[0]->img().size();
+        cv::Size img_size = views_[0]->img().size();
+        image_width_ = img_size.width;
+        image_height_ = img_size.height;
     } else {
-        assert(img_size_ == views_[num_views_ - 1]->img().size());
+        cv::Size img_size = views_[num_views_ - 1]->img().size();
+        assert(image_width_ == img_size.width && image_height_ == img_size.height);
     }
 }
 
@@ -26,6 +29,7 @@ void Calibrator::calc() {
     }
     track();
     bundleAdjustment();
+    undistortImages();
 }
 
 void Calibrator::track() {
@@ -203,13 +207,13 @@ void Calibrator::bundleAdjustment() {
         return;
     }
 
-    double f_init = std::max(img_size_.width, img_size_.height);
+    double f_init = std::max(image_width_, image_height_);
     double k1_init = 0.0;
     double k2_init = 0.0;
 
     // fix principal point at the center
-    cx_ = img_size_.width / 2;
-    cy_ = img_size_.height / 2;
+    cx_ = image_width_ / 2;
+    cy_ = image_height_ / 2;
 
     initPosesDepths();
 
@@ -267,3 +271,95 @@ void Calibrator::bundleAdjustment() {
         }
     }
 }
+
+
+void Calibrator::undistortImages() {
+    using namespace cv;
+
+    // find 'f_new' to keep every pixel
+    double min_x=0, max_x=0;
+    double min_y=0, max_y=0;
+    
+    for(int i=0;i<image_height_;i++){
+        for(int j=0;j<image_width_;j++){
+            double xij=(j-cx_)/f_;
+            double yij=(i-cy_)/f_;
+            double r2ij=xij*xij+yij*yij;
+            double rad=1+k1_*r2ij+k2_*r2ij*r2ij;
+            double xij_=xij*rad;
+            double yij_=yij*rad;
+            if(xij_<min_x) min_x=xij_;
+            if(xij_>max_x) max_x=xij_;
+            if(yij_<min_y) min_y=yij_;
+            if(yij_>max_y) max_y=yij_;
+        }
+    }
+    double f_min_x=-cx_/min_x;
+    double f_max_x=(image_width_-cx_)/max_x;
+    double f_min_y=-cy_/min_y;
+    double f_max_y=(image_height_-cy_)/max_y;
+    double tempx=(f_min_x<f_max_x)?f_min_x:f_max_x;
+    double tempy=(f_min_y<f_max_y)?f_min_y:f_max_y;
+    f_new_=(tempx<tempy)?tempx:tempy;
+    
+    // meshgrid
+    float *x_=new float[image_height_*image_width_];
+    float *y_=new float[image_height_*image_width_];
+    for(int i=0;i<image_height_;i++) {
+        for(int j=0;j<image_width_;j++) {
+            x_[i*image_width_+j]=(j-cx_)/f_new_;
+            y_[i*image_width_+j]=(i-cy_)/f_new_;
+        }
+    }
+    Mat x=Mat(image_height_,image_width_,CV_32F,x_);
+    Mat y=Mat(image_height_,image_width_,CV_32F,y_);
+    Mat x_bak=x.clone();
+    Mat y_bak=y.clone();
+    
+    // iteratively find the inverse mapping
+    for(int i=0;i<10;i++) {
+        Mat x1=x.clone();
+        Mat y1=y.clone();
+        Mat x2=x1.mul(x1);
+        Mat y2=y1.mul(y1);
+        Mat x3=x2.mul(x1);
+        Mat y3=y2.mul(y1);
+        Mat r2=x2+y2;
+        Mat r4=r2.mul(r2);
+        Mat r2x=2*x1;
+        Mat r2y=2*y1;
+        Mat r4x=(4*x3)+(4*x1.mul(y2));
+        Mat r4y=(4*x2.mul(y1))+(4*y3);
+        Mat dist=1.0+(k1_*r2)+(k2_*r4);
+        Mat x__=x1.mul(dist);
+        Mat y__=y1.mul(dist);
+        Mat rx=x_bak-x__;
+        Mat ry=y_bak-y__;
+        Mat rxx=-1-(k1_*r2)-(k2_*r4)-(k1_*x1.mul(r2x))-(k2_*x1.mul(r4x));
+        Mat rxy=-(k1_*x1.mul(r2y))-(k2_*x1.mul(r4y));
+        Mat ryx=-(k1_*y1.mul(r2x))-(k2_*y1.mul(r4x));
+        Mat ryy=-1-(k1_*r2)-(k2_*r4)-(k1_*y1.mul(r2y))-(k2_*y1.mul(r4y));
+        Mat a=rxx.mul(rxx)+ryx.mul(ryx);
+        Mat b=rxx.mul(rxy)+ryx.mul(ryy);
+        Mat c=b;
+        Mat d=rxy.mul(rxy)+ryy.mul(ryy);
+        Mat det=(a.mul(d))-(b.mul(c));
+        Mat dx=-(1/det).mul( (d.mul(rxx)-b.mul(rxy)).mul(rx) + (d.mul(ryx)-b.mul(ryy)).mul(ry) );
+        Mat dy=-(1/det).mul( (-c.mul(rxx)+a.mul(rxy)).mul(rx) + (-c.mul(ryx)+a.mul(ryy)).mul(ry) );
+        x=x+dx;
+        y=y+dy;
+    }
+    Mat udx=(f_*x+cx_);
+    ud_mapx_=udx.clone();
+    Mat udy=(f_*y+cy_);
+    ud_mapy_=udy.clone();
+    
+    delete[] x_;
+    delete[] y_;
+}
+
+void Calibrator::undistort(cv::Mat img_src, cv::Mat img_dst) {
+    cv::remap(img_src, img_dst, ud_mapx_, ud_mapy_, cv::INTER_CUBIC);
+}
+
+

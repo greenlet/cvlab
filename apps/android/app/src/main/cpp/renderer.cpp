@@ -186,8 +186,13 @@ void Renderer::checkGlError() {
 }
 
 void Renderer::drawFrame() {
-    assert(initialized_);
+    if (!initialized_) {
+        return;
+    }
     updateImage();
+    if (!initialized_) {
+        return;
+    }
     //  D("drawFrame. image_updated: %d", image_updated_);
     drawImage();
 }
@@ -216,4 +221,8 @@ void Renderer::deinit() {
         deinitTexture();
         initialized_ = false;
     }
+}
+
+void Renderer::deinit_ext() {
+    initialized_ = false;
 }

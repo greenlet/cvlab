@@ -17,3 +17,8 @@ void CvlabApp::onNewImage(cv::Mat image_rgb) {
         renderer_.newImage_ext(image_rgb.clone());
     }
 }
+
+CvlabApp::~CvlabApp() {
+    camera_.stop();
+    renderer_.deinit_ext();
+}

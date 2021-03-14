@@ -10,6 +10,7 @@
 class CvlabApp : public Logger {
    public:
     CvlabApp();
+    ~CvlabApp();
 
     CameraAndroid &camera() { return camera_; }
     Renderer &renderer() { return renderer_; }

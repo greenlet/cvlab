@@ -14,6 +14,7 @@ class Renderer : public Logger {
     void updateSize(int width, int heigth);
     void drawFrame();
     void newImage_ext(cv::Mat image_rgb);
+    void deinit_ext();
 
    private:
     void deinit();
@@ -36,7 +37,7 @@ class Renderer : public Logger {
     int win_height_ = 0;
 
     GLProgram video_program_;
-    bool initialized_ = false;
+    std::atomic<bool> initialized_ = false;
 
     float vertices_[5 * 4]{
         // x, y, z, u, v

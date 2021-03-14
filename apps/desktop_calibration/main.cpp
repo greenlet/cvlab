@@ -66,7 +66,26 @@ int main(int argc, char **argv) {
         }
 
         cv::imshow("keypoints", img);
-        // cv::waitKey(std::max(int(inter_frame_step_ms), 100));
+        cv::waitKey(std::max(int(inter_frame_step_ms), 100));
+        // cv::waitKey(0);
+    }
+
+    int i = 0;
+    while (cap.isOpened() || i < calib.views().size()) {
+        ViewPtr view;
+        if (i < calib.views().size()) {
+            view = calib.views()[i++];
+        } else {
+            cv::Mat frame;
+            if (!cap.read(frame)) {
+                continue;
+            }
+            view = std::make_shared<View>(++frame_ind, frame);
+        }
+
+        cv::Mat img_undist(view->img().size(), view->img().type());
+        calib.undistort(view->img(), img_undist);
+        cv::imshow("undistorted", img_undist);
         cv::waitKey(0);
     }
 

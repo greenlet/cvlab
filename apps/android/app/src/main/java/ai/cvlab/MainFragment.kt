@@ -1,6 +1,7 @@
 package ai.cvlab
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -9,7 +10,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.navigation.findNavController
 import kotlinx.android.synthetic.main.fragment_main.*
 import kotlinx.android.synthetic.main.fragment_main.view.*
@@ -28,8 +31,6 @@ class MainFragment : Fragment() {
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
-
-    private var cameraPermissionRequested = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,46 +54,22 @@ class MainFragment : Fragment() {
         return view
     }
 
-    private fun allPermissionsGranted() = CAMERA_REQUIRED_PERMISSIONS.all {
-        ContextCompat.checkSelfPermission(
-            requireActivity().baseContext, it
-        ) == PackageManager.PERMISSION_GRANTED
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<String>, grantResults:
-        IntArray
-    ) {
-        if (requestCode == CAMERA_REQUEST_PERMISSIONS_CODE) {
-            if (allPermissionsGranted()) {
-                val action = MainFragmentDirections.actionMainFragmentToCalibrationFragment();
-                calibrate_camera_button.findNavController().navigate(action);
-            } else {
-                Toast.makeText(
-                    context,
-                    "Camera permissions not granted",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-    }
-
-
     private fun onCalibrateCameraClick(view: View) {
-        if (allPermissionsGranted()) {
-            val action = MainFragmentDirections.actionMainFragmentToCalibrationFragment();
-            view.findNavController().navigate(action);
-        } else {
-            cameraPermissionRequested = true
-            ActivityCompat.requestPermissions(
-                requireActivity(), CAMERA_REQUIRED_PERMISSIONS, CAMERA_REQUEST_PERMISSIONS_CODE
-            )
-        }
+        PermissionManager.requestCamera(PermissionSubscriber {
+            if (it) {
+                val action = MainFragmentDirections.actionMainFragmentToCalibrationFragment();
+                view.findNavController().navigate(action);
+            }
+        })
     }
 
     private fun onShowDepthClick(view: View) {
-        val action = MainFragmentDirections.actionMainFragmentToDepthFragment();
-        view.findNavController().navigate(action);
+        PermissionManager.requestCamera(PermissionSubscriber {
+            if (it) {
+                val action = MainFragmentDirections.actionMainFragmentToDepthFragment();
+                view.findNavController().navigate(action);
+            }
+        })
     }
 
     companion object : Logger() {
@@ -113,8 +90,5 @@ class MainFragment : Fragment() {
                     putString(ARG_PARAM2, param2)
                 }
             }
-
-        private const val CAMERA_REQUEST_PERMISSIONS_CODE = 1
-        private val CAMERA_REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
 }

@@ -2,7 +2,10 @@
     "clang-format.executable": "clang-format",
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "cmake.configureSettings": {
-        "OpenCV_DIR": "/home/misha/prog/lib/opencv-install/linux/Release/lib/cmake/opencv4"
+        "OpenCV_DIR": "/home/misha/prog/lib/opencv-install/linux/4.5.1/Release/lib/cmake/opencv4",
+        "CUDA_TOOLKIT_ROOT_DIR": "/usr/local/cuda",
+        "Ceres_DIR": "/home/misha/prog/lib/ceres-install/linux/2.0.0/Release/lib/cmake/Ceres",
+        "Eigen3_DIR": "/home/misha/prog/lib/eigen-install/linux/3.3.9/Release/share/eigen3/cmake"
     },
     "files.associations": {
         "array": "cpp",

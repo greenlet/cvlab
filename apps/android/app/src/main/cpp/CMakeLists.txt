@@ -14,6 +14,16 @@ find_library(media-lib mediandk)
 find_library(gl-lib GLESv3)
 #find_library(egl-lib EGL)
 
+set(Eigen3_DIR "${EIGEN3_PATH}/share/eigen3/cmake")
+message(STATUS "Eigen3_DIR: ${Eigen3_DIR}")
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIRS})
+
+set(Ceres_DIR "${CERES_PATH}/${ANDROID_ABI}/lib/cmake/Ceres")
+message(STATUS "Ceres_DIR: ${Ceres_DIR}")
+find_package(Ceres REQUIRED)
+include_directories(${Ceres_INCLUDE_DIRS})
+
 set(OpenCV_DIR "${OPENCV_SDK_PATH}/native/jni/abi-${ANDROID_ABI}")
 message(STATUS "OpenCV_DIR: ${OpenCV_DIR}")
 find_package(OpenCV REQUIRED)
