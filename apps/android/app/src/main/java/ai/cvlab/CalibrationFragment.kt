@@ -1,10 +1,12 @@
 package ai.cvlab
 
 import android.os.Bundle
+import android.os.Looper
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import kotlinx.android.synthetic.main.fragment_calibration.view.*
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -16,7 +18,7 @@ private const val ARG_PARAM2 = "param2"
  * Use the [CalibrationFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class CalibrationFragment : Fragment() {
+class CalibrationFragment : Fragment(), CalibStateUpdateReceiver {
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
@@ -27,6 +29,7 @@ class CalibrationFragment : Fragment() {
             param1 = it.getString(ARG_PARAM1)
             param2 = it.getString(ARG_PARAM2)
         }
+        Looper.getMainLooper()
     }
 
     override fun onCreateView(
@@ -34,15 +37,74 @@ class CalibrationFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         D("onCreateView")
+
+        val view = inflater.inflate(R.layout.fragment_calibration, container, false)
+
+        view.calib_capture_button.setOnClickListener { onCalibCaptureClick(it) }
+        view.calib_calc_button.setOnClickListener { onCalibCalcClick(it) }
+        view.calib_calc_button.visibility = View.INVISIBLE
+
         Cvlab.startCamera()
+        Cvlab.startCalibration(this)
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_calibration, container, false)
+        return view
+    }
+
+    override fun onCalibStateUpdate(event: CalibState, value: Int) {
+        D("onCalibStateUpdate: $event. Value: $value")
+        when (event) {
+            CalibState.Viewing -> {
+                view?.calib_capture_button?.visibility = View.VISIBLE
+                view?.calib_calc_button?.visibility = View.INVISIBLE
+                view?.calib_capture_button?.text = getString(R.string.start_capturing)
+            }
+            CalibState.Capturing -> {
+                // First time
+                if (value == 0) {
+                    view?.calib_capture_button?.visibility = View.VISIBLE
+                    view?.calib_calc_button?.visibility = View.INVISIBLE
+                    view?.calib_capture_button?.text = getString(R.string.stop_capturing)
+                }
+            }
+            CalibState.CapturePreview -> {
+                if (value == 0) {
+                    view?.calib_capture_button?.visibility = View.VISIBLE
+                    view?.calib_calc_button?.visibility = View.VISIBLE
+                    view?.calib_capture_button?.text = getString(R.string.start_capturing)
+                    view?.calib_calc_button?.text = getText(R.string.calculate)
+                }
+            }
+            CalibState.Calculating -> {
+                if (value == 0) {
+                    view?.calib_capture_button?.visibility = View.INVISIBLE
+                    view?.calib_calc_button?.visibility = View.VISIBLE
+                    view?.calib_calc_button?.text = getText(R.string.stop_calculation)
+                }
+            }
+        }
+    }
+
+    private fun onCalibCaptureClick(view: View) {
+        if (Cvlab.calibState == CalibState.Viewing || Cvlab.calibState == CalibState.CapturePreview) {
+            Cvlab.startCalibCapture()
+        } else if (Cvlab.calibState == CalibState.Capturing) {
+            Cvlab.stopCalibCapture()
+        }
+    }
+
+    private fun onCalibCalcClick(view: View) {
+        if (Cvlab.calibState == CalibState.CapturePreview) {
+            Cvlab.startCalibCalc()
+        } else if (Cvlab.calibState == CalibState.Calculating) {
+            Cvlab.stopCalibCalc()
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         D("onDestroy")
         Cvlab.stopCamera()
+        Cvlab.stopCalibration()
     }
 
     companion object : Logger() {
@@ -64,4 +126,6 @@ class CalibrationFragment : Fragment() {
                 }
             }
     }
+
+
 }

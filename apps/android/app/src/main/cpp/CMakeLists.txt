@@ -22,6 +22,9 @@ include_directories(${EIGEN3_INCLUDE_DIRS})
 set(Ceres_DIR "${CERES_PATH}/${ANDROID_ABI}/lib/cmake/Ceres")
 message(STATUS "Ceres_DIR: ${Ceres_DIR}")
 find_package(Ceres REQUIRED)
+if (NOT DEFINED ${Ceres_INCLUDE_DIRS})
+    set(Ceres_INCLUDE_DIRS ${Ceres_DIR}/../../../include)
+endif()
 include_directories(${Ceres_INCLUDE_DIRS})
 
 set(OpenCV_DIR "${OPENCV_SDK_PATH}/native/jni/abi-${ANDROID_ABI}")
@@ -31,10 +34,10 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 
 
 set(CPP_SOURCE_DIR ${CMAKE_SOURCE_DIR}/../../../../../../)
-set(EIGEN_SRC_DIR ${CPP_SOURCE_DIR}/external/eigen)
-include_directories(${EIGEN_SRC_DIR})
-
 include_directories(${CPP_SOURCE_DIR}/core/src)
+
+#set(EIGEN_SRC_DIR ${CPP_SOURCE_DIR}/external/eigen)
+#include_directories(${EIGEN_SRC_DIR})
 
 
 add_library(cvlab-core STATIC IMPORTED)
@@ -49,6 +52,8 @@ add_library(cvlab-android SHARED
         logger.cpp
         gl_program.cpp
         renderer.cpp
+#        java_classes/java_classes.cpp
+#        java_classes/android_os_message.cpp
 )
 
 target_link_libraries(cvlab-android
@@ -59,6 +64,7 @@ target_link_libraries(cvlab-android
         ${gl-lib}
 #        ${egl-lib}
         ${OpenCV_LIBRARIES}
+        ceres
         cvlab-core
         )
 

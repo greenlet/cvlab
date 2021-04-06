@@ -1,13 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:context=".CalibrationFragment">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".CalibrationFragment">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="20dp"
+        android:layout_marginEnd="20dp"
+        android:orientation="vertical"
+        android:elevation="2dp"
+        >
+        <Button
+            android:id="@+id/calib_calc_button"
+            android:text="@string/calculate"
+            android:layout_width="120dp"
+            android:layout_height="60dp"
+            android:elevation="2dp"
+            />
+
+        <Button
+            android:id="@+id/calib_capture_button"
+            android:text="@string/start_capturing"
+            android:layout_marginTop="10dp"
+            android:layout_width="120dp"
+            android:layout_height="60dp"
+            android:elevation="2dp"
+            />
+    </LinearLayout>
 
     <ai.cvlab.CameraSurfaceView
-            android:id="@+id/camera_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+        android:id="@+id/camera_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+
+    </ai.cvlab.CameraSurfaceView>
 
 </FrameLayout>
