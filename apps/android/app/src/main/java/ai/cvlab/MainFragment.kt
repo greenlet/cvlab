@@ -49,7 +49,6 @@ class MainFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_main, container, false)
 
         view.calibrate_camera_button.setOnClickListener { onCalibrateCameraClick(it) }
-        view.show_depth_button.setOnClickListener { onShowDepthClick(it) }
 
         return view
     }

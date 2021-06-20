@@ -23,3 +23,5 @@ class Scene {
     CashashMatcher cashash_matcher_;
     MatchesPtr matches_;
 };
+
+using ScenePtr = std::shared_ptr<Scene>;

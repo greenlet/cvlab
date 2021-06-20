@@ -37,9 +37,15 @@
         android:id="@+id/camera_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
-
-
     </ai.cvlab.CameraSurfaceView>
+
+    <TextView
+        android:id="@+id/calib_status_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textSize="25sp"
+        android:textColor="#ff0000"
+        />
 
 </FrameLayout>

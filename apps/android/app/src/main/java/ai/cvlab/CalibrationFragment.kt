@@ -1,11 +1,12 @@
 package ai.cvlab
 
 import android.os.Bundle
-import android.os.Looper
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import kotlinx.android.synthetic.main.fragment_calibration.*
 import kotlinx.android.synthetic.main.fragment_calibration.view.*
 
 // TODO: Rename parameter arguments, choose names that match
@@ -29,7 +30,6 @@ class CalibrationFragment : Fragment(), CalibStateUpdateReceiver {
             param1 = it.getString(ARG_PARAM1)
             param2 = it.getString(ARG_PARAM2)
         }
-        Looper.getMainLooper()
     }
 
     override fun onCreateView(
@@ -50,9 +50,14 @@ class CalibrationFragment : Fragment(), CalibStateUpdateReceiver {
         return view
     }
 
-    override fun onCalibStateUpdate(event: CalibState, value: Int) {
-        D("onCalibStateUpdate: $event. Value: $value")
+    override fun onCalibStateUpdate(event: CalibState, value: Int, error: String) {
+        val errorPostfix = if (error.isEmpty()) "" else ". Error: $error"
+        D("onCalibStateUpdate: $event. Value: $value$errorPostfix")
+        var status = ""
         when (event) {
+            CalibState.None -> {
+                // Not started yet
+            }
             CalibState.Viewing -> {
                 view?.calib_capture_button?.visibility = View.VISIBLE
                 view?.calib_calc_button?.visibility = View.INVISIBLE
@@ -67,12 +72,12 @@ class CalibrationFragment : Fragment(), CalibStateUpdateReceiver {
                 }
             }
             CalibState.CapturePreview -> {
-                if (value == 0) {
+//                if (value == 0) {
                     view?.calib_capture_button?.visibility = View.VISIBLE
                     view?.calib_calc_button?.visibility = View.VISIBLE
                     view?.calib_capture_button?.text = getString(R.string.start_capturing)
                     view?.calib_calc_button?.text = getText(R.string.calculate)
-                }
+//                }
             }
             CalibState.Calculating -> {
                 if (value == 0) {
@@ -80,7 +85,18 @@ class CalibrationFragment : Fragment(), CalibStateUpdateReceiver {
                     view?.calib_calc_button?.visibility = View.VISIBLE
                     view?.calib_calc_button?.text = getText(R.string.stop_calculation)
                 }
+                status = "$value%"
             }
+        }
+        view?.calib_status_text?.visibility = View.INVISIBLE
+        if (status.isNotEmpty()) {
+            D("status: $status")
+            view?.calib_status_text?.visibility = View.VISIBLE
+            view?.calib_status_text?.text = status
+        }
+
+        if (error.isNotEmpty()) {
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show();
         }
     }
 

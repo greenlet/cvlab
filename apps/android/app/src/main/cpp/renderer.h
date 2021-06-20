@@ -6,25 +6,29 @@
 
 #include "gl_program.h"
 #include "logger.h"
+#include "view.h"
 
 class Renderer : public Logger {
    public:
     Renderer();
-    void init();
-    void updateSize(int width, int heigth);
-    void drawFrame();
-    void newImage_ext(cv::Mat image_rgb);
-    void deinit_ext();
+    void init_render();
+    void updateSize_render(int width, int heigth);
+    void drawFrame_render();
+    void showView(ViewPtr view);
+    int startLoop(std::vector<ViewPtr> views, double fps);
+    void stopLoop(int loop_id);
+    void deinit();
 
    private:
-    void deinit();
-    void updateImage();
-    bool initTexture();
-    void deinitTexture();
-    void drawImage();
-    void checkGlError();
+    void deinit_render();
+    void updateImage_render();
+    bool initTexture_render();
+    void deinitTexture_render();
+    void drawImage_render();
+    void checkGlError_render();
+    void stopLoop_();
 
-    std::mutex mutex_ext_;
+    std::mutex mu_;
     cv::Mat image_rgb_ext_;
     bool image_updated_ext_ = false;
 
@@ -58,4 +62,14 @@ class Renderer : public Logger {
     unsigned texture_id_ = 0;
     unsigned video_vertex_array_ = 0;
     unsigned video_buffers_[2]{0, 0};
+
+    std::vector<ViewPtr> views_;
+    double fps_ = 30.0;
+    int i_view_ = 0;
+    int cur_loop_id_ = 0;
+    bool loop_is_active_ = false;
+    double last_view_time_ = 0;
 };
+
+using RendererPtr = std::shared_ptr<Renderer>;
+

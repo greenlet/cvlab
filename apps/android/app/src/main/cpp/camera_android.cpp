@@ -254,7 +254,8 @@ void CameraAndroid::onNewImage(AImageReader *image_reader) {
     //  D("y: %p - %p. u: %p - %p. v: %p - %p", y_pixel, y_pixel + y_len - 1, u_pixel, u_pixel +
     //  u_len - 1, v_pixel, v_pixel + v_len - 1);
 
-    callback_(image_rgb);
+    ViewPtr view = std::make_shared<View>(view_id_++, image_rgb);
+    callback_(view);
 }
 
 void CameraAndroid::onCaptureSessionClosed(ACameraCaptureSession *session) {

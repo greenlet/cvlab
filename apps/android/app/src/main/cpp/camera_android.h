@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "logger.h"
+#include "view.h"
 
 struct CameraSize {
     int32_t width;
@@ -31,7 +32,7 @@ struct CameraProps {
     std::string toString(int tab_size = 4) const;
 };
 
-using CameraCallback = std::function<void(cv::Mat)>;
+using CameraCallback = std::function<void(ViewPtr)>;
 
 class CameraAndroid : Logger {
    public:
@@ -80,4 +81,5 @@ class CameraAndroid : Logger {
 
     uint8_t *image_buffer_ = nullptr;
     int image_buffer_len_ = 0;
+    int view_id_ = 0;
 };

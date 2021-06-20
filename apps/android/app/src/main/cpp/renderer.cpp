@@ -6,10 +6,11 @@
 #include <GLES3/gl3ext.h>
 
 #include <utility>
+#include "common.h"
 
 Renderer::Renderer() : Logger("Renderer"), video_program_("VideoPreview") {}
 
-void Renderer::init() {
+void Renderer::init_render() {
     if (initialized_) {
         return;
     }
@@ -46,14 +47,14 @@ void Renderer::init() {
     initialized_ = true;
 }
 
-void Renderer::updateSize(int width, int heigth) {
-    deinit();
+void Renderer::updateSize_render(int width, int heigth) {
+    deinit_render();
     win_width_ = width;
     win_height_ = heigth;
-    init();
+    init_render();
 }
 
-bool Renderer::initTexture() {
+bool Renderer::initTexture_render() {
     if (!texture_initialized_) {
         video_program_.use();
 
@@ -69,7 +70,7 @@ bool Renderer::initTexture() {
         glGenBuffers(2, video_buffers_);
 
         float image_width = float(image_width_), image_height = float(image_height_);
-        float scale = std::max(float(win_width_) / image_width, float(win_height_) / image_height);
+        float scale = std::min(float(win_width_) / image_width, float(win_height_) / image_height);
         image_width *= scale;
         image_height *= scale;
         float h_offset = (image_width - float(win_width_)) / 2;
@@ -103,7 +104,7 @@ bool Renderer::initTexture() {
     return false;
 }
 
-void Renderer::deinitTexture() {
+void Renderer::deinitTexture_render() {
     if (texture_initialized_) {
         glDeleteTextures(1, &texture_id_);
         glDeleteVertexArrays(1, &video_vertex_array_);
@@ -116,20 +117,20 @@ void Renderer::deinitTexture() {
     }
 }
 
-void Renderer::drawImage() {
+void Renderer::drawImage_render() {
     if (win_width_ == 0 || win_height_ == 0 || image_rgb_.empty()) {
         return;
     }
 
     if (image_rgb_.size[1] != image_width_ || image_rgb_.size[0] != image_height_) {
-        deinitTexture();
+        deinitTexture_render();
         image_width_ = image_rgb_.size[1];
         image_height_ = image_rgb_.size[0];
     }
 
     video_program_.use();
 
-    bool first_time = initTexture();
+    bool first_time = initTexture_render();
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture_id_);
 
@@ -142,7 +143,7 @@ void Renderer::drawImage() {
         image_updated_ = false;
     };
 
-    checkGlError();
+    checkGlError_render();
 
     glBindVertexArray(video_vertex_array_);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -173,7 +174,7 @@ char const *glErrorToString(GLenum const err) noexcept {
     }
 }
 
-void Renderer::checkGlError() {
+void Renderer::checkGlError_render() {
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
         const char *err_str = glErrorToString(err);
@@ -185,44 +186,83 @@ void Renderer::checkGlError() {
     }
 }
 
-void Renderer::drawFrame() {
+void Renderer::drawFrame_render() {
     if (!initialized_) {
         return;
     }
-    updateImage();
+    updateImage_render();
     if (!initialized_) {
         return;
     }
     //  D("drawFrame. image_updated: %d", image_updated_);
-    drawImage();
+    drawImage_render();
 }
 
-void Renderer::newImage_ext(cv::Mat image_rgb) {
-    std::lock_guard<std::mutex> lock(mutex_ext_);
-    //  D("drawImage. win: %d x %d. image: %d x %d. initialized: %d. texture initialized: %d",
-    //    win_width_, win_height_, image_width_, image_height_, initialized_, texture_initialized_);
-    image_rgb_ext_ = std::move(image_rgb);
-    image_updated_ext_ = true;
-}
-
-void Renderer::updateImage() {
-    //  D("updateImage lock");
-    std::lock_guard<std::mutex> lock(mutex_ext_);
+void Renderer::updateImage_render() {
+    G_LOCK(mu_);
     if (image_updated_ext_) {
         image_rgb_ = image_rgb_ext_;
         image_updated_ext_ = false;
         image_updated_ = true;
+    } else if (loop_is_active_) {
+        auto now = std::chrono::system_clock::now();
+        std::chrono::duration<double, std::milli> now_ms = now.time_since_epoch();
+        double elapsed = now_ms.count() - last_view_time_;
+        if (last_view_time_ == 0 || elapsed >= 1000 / fps_) {
+            image_rgb_ = views_[i_view_]->img();
+            image_updated_ = true;
+            i_view_ = (i_view_ + 1) % views_.size();
+            last_view_time_ = now_ms.count();
+        }
     }
 }
 
-void Renderer::deinit() {
+void Renderer::deinit_render() {
     if (initialized_) {
         video_program_.deinit();
-        deinitTexture();
+        deinitTexture_render();
         initialized_ = false;
     }
 }
 
-void Renderer::deinit_ext() {
+void Renderer::deinit() {
+    G_LOCK(mu_);
     initialized_ = false;
+}
+
+void Renderer::showView(ViewPtr view) {
+    G_LOCK(mu_);
+    stopLoop_();
+    image_rgb_ext_ = view->img();
+    image_updated_ext_ = true;
+}
+
+int Renderer::startLoop(std::vector<ViewPtr> views, double fps) {
+    G_LOCK(mu_);
+    if (views.empty()) {
+        W("Calling startLoop with empty views container");
+        return -1;
+    }
+    stopLoop_();
+    cur_loop_id_++;
+    loop_is_active_ = true;
+    views_ = views;
+    i_view_ = 0;
+    fps_ = fps;
+    last_view_time_ = 0;
+    return cur_loop_id_;
+}
+
+void Renderer::stopLoop(int loop_id) {
+    G_LOCK(mu_);
+    if (cur_loop_id_ == loop_id) {
+        stopLoop_();
+    }
+}
+
+void Renderer::stopLoop_() {
+    if (loop_is_active_) {
+        loop_is_active_ = false;
+        views_.clear();
+    }
 }

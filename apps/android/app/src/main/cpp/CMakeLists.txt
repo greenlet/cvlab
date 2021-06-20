@@ -52,7 +52,8 @@ add_library(cvlab-android SHARED
         logger.cpp
         gl_program.cpp
         renderer.cpp
-#        java_classes/java_classes.cpp
+        calib_manager.cpp
+        java_classes/jni_helpers.cpp
 #        java_classes/android_os_message.cpp
 )
 

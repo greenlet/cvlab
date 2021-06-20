@@ -6,11 +6,11 @@ import android.os.Looper
 
 // TODO: Create standalone calibration native state holder and its Kotlin wrapper
 enum class CalibState {
-    Viewing, Capturing, CapturePreview, Calculating
+    None, Viewing, Capturing, CapturePreview, Calculating
 }
 
 interface CalibStateUpdateReceiver {
-    fun onCalibStateUpdate(event: CalibState, value: Int)
+    fun onCalibStateUpdate(event: CalibState, value: Int, error: String)
 }
 
 object Cvlab : Logger() {
@@ -28,7 +28,7 @@ object Cvlab : Logger() {
     external fun startCalibCalc()
     external fun stopCalibCalc()
 
-    var calibState = CalibState.Viewing
+    var calibState = CalibState.None
     private var calibStateUpdateReceiver: CalibStateUpdateReceiver? = null
     private var calibStateUpdateHandler: Handler? = null
 
@@ -36,22 +36,23 @@ object Cvlab : Logger() {
         calibStateUpdateReceiver = updateReceiver
         calibStateUpdateHandler = Handler(Looper.getMainLooper())
         startCalibration_jni()
-        calibState = CalibState.Viewing
+        calibState = CalibState.None
     }
 
     fun stopCalibration() {
         stopCalibration_jni()
         calibStateUpdateReceiver = null
         calibStateUpdateHandler = null
-        calibState = CalibState.Viewing
+        calibState = CalibState.None
     }
 
     @Suppress("unused")
-    fun onCalibStateUpdate_jni(stateId: Int, value: Int) {
-        calibState = CalibState.values()[stateId]
-        D("onCalibStateUpdate_jni: $calibState. Value: $value")
+    fun onCalibStateUpdate_jni(stateId: Int, value: Int, error: String) {
         calibStateUpdateHandler?.post {
-            calibStateUpdateReceiver?.onCalibStateUpdate(calibState, value)
+            calibState = CalibState.values()[stateId]
+            val errorPostfix = if (error.isEmpty())  "" else ". Error: $error"
+            D("onCalibStateUpdate_jni: $calibState. Value: $value$errorPostfix")
+            calibStateUpdateReceiver?.onCalibStateUpdate(calibState, value, error)
         }
     }
 }
