@@ -10,12 +10,12 @@
 static const char *TAG = "CameraAndroid";
 static Logger LOG(TAG);
 
-std::string getBackFacingCameraId(ACameraManager *camera_manager) {
+std::vector<std::string> getBackFacingCameraIds(ACameraManager *camera_manager) {
     ACameraIdList *camera_ids = nullptr;
     ACameraManager_getCameraIdList(camera_manager, &camera_ids);
 
     LOG.D("Cameras:");
-    const char *back_camera_id = nullptr;
+    std::vector<std::string> back_camera_ids;
     for (int i = 0; i < camera_ids->numCameras; i++) {
         const char *camera_id = camera_ids->cameraIds[i];
         ACameraMetadata *camera_metadata;
@@ -36,7 +36,7 @@ std::string getBackFacingCameraId(ACameraManager *camera_manager) {
                 const uint8_t facing =
                     static_cast<acamera_metadata_enum_android_lens_facing_t>(lens_info.data.u8[0]);
                 if (facing == ACAMERA_LENS_FACING_BACK) {
-                    back_camera_id = camera_id;
+                    back_camera_ids.emplace_back(camera_id);
                     LOG.D("Camera facing back!");
                 }
             }
@@ -47,7 +47,7 @@ std::string getBackFacingCameraId(ACameraManager *camera_manager) {
 
     ACameraManager_deleteCameraIdList(camera_ids);
 
-    return back_camera_id;
+    return back_camera_ids;
 }
 
 CameraProps getCameraProps(ACameraManager *camera_manager, const char *camera_id) {
@@ -140,18 +140,49 @@ std::string CameraProps::toString(int tab_size) const {
     return os.str();
 }
 
-CameraSize CameraAndroid::chooseDimensions(CameraSize preferrable,
-                                           const std::vector<CameraSize> &sizes) {
-    CameraSize res = {};
+std::pair<int32_t, CameraSize> CameraAndroid::chooseDimensions(const std::vector<CameraSize> &sizes) {
     int32_t min_diff = 1e6;
+    CameraSize res = {};
     for (const auto &size : sizes) {
-        int32_t diff = abs(preferrable.width - size.width) + abs(preferrable.height - size.height);
+        int32_t diff = abs(preferrable_camera_size_.width - size.width) + abs(preferrable_camera_size_.height - size.height);
         if (res.width == 0 || diff < min_diff) {
             res = size;
             min_diff = diff;
         }
     }
-    return res;
+    return {min_diff, res};
+}
+
+bool CameraAndroid::chooseBackCamera() {
+    auto back_camera_ids = getBackFacingCameraIds(camera_manager_);
+    int32_t min_size_diff = 1e6;
+    CameraProps cam_props_picked;
+    CameraSize cam_size_picked;
+    bool camera_chosen = false;
+    for (auto &back_camera_id : back_camera_ids) {
+        CameraProps cam_props = getCameraProps(camera_manager_, back_camera_id.c_str());
+        if (cam_props.yuv_420_888_sizes.empty()) {
+            continue;
+        }
+        auto [size_diff, cam_size] = chooseDimensions(cam_props.yuv_420_888_sizes);
+        if (!camera_chosen || min_size_diff < size_diff) {
+            camera_chosen = true;
+            min_size_diff = size_diff;
+            cam_props_picked = cam_props;
+            cam_size_picked = cam_size;
+        }
+        LOG.D(cam_props.toString().c_str());
+    }
+
+    if (camera_chosen) {
+        camera_props_ = cam_props_picked;
+        camera_size_ = cam_size_picked;
+        LOG.I("Camera chosen:\n%s", camera_props_.toString().c_str());
+        return true;
+    }
+
+    LOG.W("Cannot chose valid back facing camera!");
+    return false;
 }
 
 CameraAndroid::CameraAndroid() : Logger(TAG) {}
@@ -278,9 +309,10 @@ void CameraAndroid::start() {
     started_ = true;
 
     camera_manager_ = ACameraManager_create();
-    std::string camera_id = getBackFacingCameraId(camera_manager_);
-    camera_props_ = getCameraProps(camera_manager_, camera_id.c_str());
-    LOG.I(camera_props_.toString().c_str());
+    if (!chooseBackCamera()) {
+        started_ = false;
+        return;
+    }
 
     ACameraDevice_stateCallbacks camera_device_callbacks{
         this,
@@ -294,7 +326,6 @@ void CameraAndroid::start() {
         return;
     }
 
-    camera_size_ = chooseDimensions(CameraSize{1920, 1080}, camera_props_.yuv_420_888_sizes);
     LOG.I("Size chosen: %s", camera_size_.toString().c_str());
 
     AImageReader_new(camera_size_.width, camera_size_.height, AIMAGE_FORMAT_YUV_420_888, 4,

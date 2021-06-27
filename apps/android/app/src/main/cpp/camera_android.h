@@ -56,7 +56,8 @@ class CameraAndroid : Logger {
     void onCaptureSessionReady(ACameraCaptureSession *session);
     void onCaptureSessionActive(ACameraCaptureSession *session);
 
-    CameraSize chooseDimensions(CameraSize preferrable, const std::vector<CameraSize> &sizes);
+    std::pair<int32_t, CameraSize> chooseDimensions(const std::vector<CameraSize> &sizes);
+    bool chooseBackCamera();
     void clear();
 
     std::mutex cam_mutex_;
@@ -64,6 +65,7 @@ class CameraAndroid : Logger {
 
     CameraCallback callback_;
 
+    CameraSize preferrable_camera_size_{1920, 1080};
     CameraProps camera_props_ = {};
     CameraSize camera_size_ = {};
 

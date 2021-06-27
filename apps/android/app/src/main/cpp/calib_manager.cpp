@@ -197,7 +197,7 @@ bool CalibManager::calcCallback_calc(const Calibrator::CalcState &state, double 
 bool CalibManager::calcTrackCallback_calc(const Calibrator::CalcState &state, double agg_start_perc,
                                           double agg_part_perc, CVPoints &points_pre) {
     if (!calcCallback_calc(state, agg_start_perc, agg_part_perc)) {
-        return true;
+        return false;
     }
 
     const ViewPtrs &views = calibrator_.views();
@@ -259,7 +259,8 @@ void CalibManager::run_calc() {
         return retval;
     });
 
-    D("Going to BA");
+    auto kpts_size = calibrator_.views_kpts().size();
+    D("Going to BA. Views: %d. Keypoint size: %d x %d", calibrator_.num_views(), kpts_size.height, kpts_size.width);
     agg_start_perc += agg_part_perc;
     agg_part_perc = 50.0;
     u_lock lock_ba(mu_main_);

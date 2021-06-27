@@ -138,6 +138,7 @@ void Calibrator::track(CalcCallback callback) {
     }
 
     views_kpts_ = cv::Mat(n_views, num_inliers, CV_32FC1);
+    num_views_ = n_views;
     for (int r = 0; r < 2 * n_views; r++) {
         int c_inlier = 0;
         for (int c = 0; c < features.cols; c++) {
